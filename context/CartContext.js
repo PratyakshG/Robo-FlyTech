@@ -32,10 +32,11 @@ export function CartProvider({ children }) {
   const clearCart = () => saveCart([]);
 
   const totalItems = cartItems.reduce((s, i) => s + i.qty, 0);
-  const totalPrice = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
+  const totalPrice = cartItems.reduce((s, i) => s + (i.offerPrice || i.price) * i.qty, 0);
+  const totalSavings = cartItems.reduce((s, i) => s + (i.offerPrice ? (i.price - i.offerPrice) * i.qty : 0), 0);
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQty, clearCart, totalItems, totalPrice }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQty, clearCart, totalItems, totalPrice, totalSavings }}>
       {children}
     </CartContext.Provider>
   );

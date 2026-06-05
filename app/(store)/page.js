@@ -1,72 +1,55 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getProductsWithOffers, getActiveOffers, getCategories } from '@/lib/api';
+import { getProductsWithOffers, getActiveOffers, getCategories, getHeroSlides } from '@/lib/api';
 import ProductCard from '@/components/store/ProductCard';
 import Navbar from '@/components/store/Navbar';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowRight, Zap } from 'lucide-react';
+import { ArrowRight, Zap, Truck, ShieldCheck, RotateCcw, Headphones } from 'lucide-react';
 import Footer from '@/components/store/Footer';
 
-const BRANDS = ['APPLE', 'SONY', 'SAMSUNG', 'CANON', 'BOSE', 'DELL', 'LOGITECH', 'DJI', 'APPLE', 'SONY', 'SAMSUNG', 'CANON', 'BOSE', 'DELL', 'LOGITECH', 'DJI'];
+const PERKS = [
+  { icon: Truck,        title: 'Free Shipping',    sub: 'On orders over ₹999' },
+  { icon: ShieldCheck,  title: 'Secure Payments',  sub: 'UPI, Cards & COD' },
+  { icon: Headphones,   title: '24/7 Support',     sub: 'We\'re always here' },
+  { icon: RotateCcw,    title: 'Easy Returns',      sub: 'Hassle-free process' },
+];
 
-const HERO_SLIDES = [
-  {
-    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=85',
-    label: 'FEATURED / TECH ESSENTIALS',
-    tag: 'NEW SEASON',
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=85',
-    label: 'FEATURED / AUDIO',
-    tag: 'BEST SELLER',
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&q=85',
-    label: 'FEATURED / LAPTOPS',
-    tag: 'TOP RATED',
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=85',
-    label: 'FEATURED / ACCESSORIES',
-    tag: 'LIMITED',
-  },
+const WHY_US = [
+  { num: '01', title: 'Curated Selection', body: 'Every product is hand-picked for quality, performance, and value — no filler.' },
+  { num: '02', title: 'Genuine Products',  body: 'We stock only authentic items from verified brands and authorized distributors.' },
+  { num: '03', title: 'Fast Dispatch',     body: 'Orders placed before 4 PM ship the same day from our fulfilment centre.' },
+  { num: '04', title: 'Expert Advice',     body: 'Our team knows the products inside out — reach us any time for guidance.' },
 ];
 
 export default function HomePage() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts]     = useState([]);
+  const [loading, setLoading]       = useState(true);
   const [flashOffer, setFlashOffer] = useState(null);
-  const [heroIndex, setHeroIndex] = useState(0);
-  const [heroSlides, setHeroSlides] = useState(HERO_SLIDES);
+  const [heroSlides, setHeroSlides] = useState([]);
+  const [heroIdx, setHeroIdx] = useState(0);
+  const heroIndex = heroSlides.length ? heroIdx % heroSlides.length : 0;
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     getProductsWithOffers({ sort: 'newest', limit: 8 }).then(r => {
-      const prods = r.data || [];
-      setProducts(prods);
+      setProducts(r.data || []);
       setLoading(false);
-      // Build hero slides from product images — shuffle and pick up to 6
-      const withImages = prods.filter(p => p.image);
-      if (withImages.length > 0) {
-        const shuffled = [...withImages].sort(() => Math.random() - 0.5).slice(0, 6);
-        setHeroSlides(shuffled.map(p => ({
-          image: p.image,
-          label: `FEATURED / ${(p.category || 'PRODUCT').toUpperCase()}`,
-          tag: p.brand?.toUpperCase() || 'NEW',
-        })));
-      }
     });
-    const heroTimer = setInterval(() => setHeroIndex(i => (i + 1) % heroSlides.length), 4000);
+    getHeroSlides().then(r => {
+      if (r.data?.length) setHeroSlides(r.data);
+    }).catch(() => {});
+    const heroTimer = setInterval(() => setHeroIdx(i => i + 1), 4000);
     getCategories().then(r => setCategories(r.data || [])).catch(() => {});
     getActiveOffers().then(r => {
       const offers = r.data || [];
-      // pick the offer with highest value for the flash banner
-      const best = offers.sort((a, b) => b.value - a.value)[0] || null;
-      setFlashOffer(best);
+      setFlashOffer(offers.sort((a, b) => b.value - a.value)[0] || null);
     }).catch(() => {});
     return () => clearInterval(heroTimer);
   }, []);
+
+  // best discounted product for spotlight
+  const spotlightProduct = products.find(p => p.offerPrice) || products[0];
 
   return (
     <>
@@ -76,9 +59,8 @@ export default function HomePage() {
         {/* ── HERO ── */}
         <section className="border-b border-gray-200">
 
-          {/* ── MOBILE HERO (< md) ── */}
+          {/* MOBILE HERO */}
           <div className="relative md:hidden h-[88vh] min-h-[500px] overflow-hidden">
-            {/* Slideshow bg */}
             {heroSlides.map((slide, i) => (
               <motion.div key={i} initial={false}
                 animate={{ opacity: heroIndex === i ? 1 : 0 }}
@@ -87,30 +69,19 @@ export default function HomePage() {
                 <img src={slide.image} alt={slide.label} className="w-full h-full object-cover" />
               </motion.div>
             ))}
-            {/* Dark gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-
-            {/* Content */}
             <div className="relative z-10 flex flex-col justify-between h-full px-5 py-8">
-              {/* Top tag */}
               <div className="flex items-center justify-between">
-                <span className="bg-[#dc2626] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">
-                  {heroSlides[heroIndex]?.label}
-                </span>
-                <span className="bg-white/10 backdrop-blur-sm text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">
-                  {heroSlides[heroIndex]?.tag}
-                </span>
+                <span className="bg-[#dc2626] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">{heroSlides[heroIndex]?.label}</span>
+                <span className="bg-white/10 backdrop-blur-sm text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">{heroSlides[heroIndex]?.tag}</span>
               </div>
-
-              {/* Center text */}
               <div>
                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                   className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/60 mb-4 flex items-center gap-2">
                   <span className="w-2 h-2 bg-[#dc2626] inline-block" />
                   VOL.04 / FEB 2026 / <span className="text-[#dc2626]">NEW SEASON</span>
                 </motion.p>
-                <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
+                <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                   className="font-black text-[3.2rem] leading-[0.9] tracking-[-0.04em] text-white mb-5">
                   Built for<br />the <span className="text-[#dc2626] italic">signal.</span>
                 </motion.h1>
@@ -119,25 +90,19 @@ export default function HomePage() {
                   Premium electronics curated for those who demand performance.
                 </motion.p>
                 <div className="flex gap-3">
-                  <Link href="/products"
-                    className="flex items-center gap-2 bg-white text-[#0a0a0a] px-5 py-3 text-sm font-bold hover:bg-[#dc2626] hover:text-white transition-colors">
+                  <Link href="/products" className="flex items-center gap-2 bg-white text-[#0a0a0a] px-5 py-3 text-sm font-bold hover:bg-[#dc2626] hover:text-white transition-colors">
                     Shop <ArrowRight size={14} />
                   </Link>
-                  <Link href="/products?deals=true"
-                    className="flex items-center gap-2 border border-white/50 text-white px-5 py-3 text-sm font-semibold hover:bg-white/10 transition-colors">
+                  <Link href="/products?deals=true" className="flex items-center gap-2 border border-white/50 text-white px-5 py-3 text-sm font-semibold hover:bg-white/10 transition-colors">
                     Deals <Zap size={13} />
                   </Link>
                 </div>
               </div>
-
-              {/* Dots + progress */}
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   {heroSlides.map((_, i) => (
-                    <button key={i} onClick={() => setHeroIndex(i)}
-                      className={`transition-all duration-300 rounded-full ${
-                        heroIndex === i ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/30'
-                      }`} />
+                    <button key={i} onClick={() => setHeroIdx(i)}
+                      className={`transition-all duration-300 rounded-full ${heroIndex === i ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/30'}`} />
                   ))}
                 </div>
                 <div className="h-[2px] bg-white/20">
@@ -148,9 +113,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ── DESKTOP HERO (>= md) ── */}
+          {/* DESKTOP HERO */}
           <div className="hidden md:grid md:grid-cols-2 max-w-[1400px] mx-auto min-h-[560px]">
-            {/* Left */}
             <div className="flex flex-col justify-center py-16 px-6 border-r border-gray-200">
               <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-gray-500 mb-6 flex items-center gap-3">
@@ -167,24 +131,14 @@ export default function HomePage() {
               </motion.p>
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
                 className="flex gap-3 flex-wrap">
-                <Link href="/products"
-                  className="flex items-center gap-2 bg-[#0a0a0a] text-white px-7 py-3.5 text-sm font-semibold hover:bg-[#dc2626] transition-colors">
+                <Link href="/products" className="flex items-center gap-2 bg-[#0a0a0a] text-white px-7 py-3.5 text-sm font-semibold hover:bg-[#dc2626] transition-colors">
                   Shop everything <ArrowRight size={15} />
                 </Link>
-                <Link href="/products?deals=true"
-                  className="flex items-center gap-2 border-[1.5px] border-[#0a0a0a] text-[#0a0a0a] px-7 py-3.5 text-sm font-semibold hover:bg-[#0a0a0a] hover:text-white transition-colors">
+                <Link href="/products?deals=true" className="flex items-center gap-2 border-[1.5px] border-[#0a0a0a] text-[#0a0a0a] px-7 py-3.5 text-sm font-semibold hover:bg-[#0a0a0a] hover:text-white transition-colors">
                   Today's deals <Zap size={14} />
                 </Link>
               </motion.div>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
-                className="mt-12 text-[10px] font-mono text-gray-400 space-y-0.5">
-                <p>LAT 40.7128°N</p>
-                <p>LNG 74.0060°W</p>
-                <p className="text-[#dc2626]">NYC HQ</p>
-              </motion.div>
             </div>
-
-            {/* Right — slideshow */}
             <div className="relative overflow-hidden bg-gray-100">
               {heroSlides.map((slide, i) => (
                 <motion.div key={i} initial={false}
@@ -194,18 +148,12 @@ export default function HomePage() {
                   <img src={slide.image} alt={slide.label} className="w-full h-full object-cover" />
                 </motion.div>
               ))}
-              <div className="absolute top-4 left-4 z-10 bg-[#dc2626] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">
-                {heroSlides[heroIndex]?.label}
-              </div>
-              <div className="absolute top-4 right-4 z-10 bg-[#0a0a0a] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">
-                {heroSlides[heroIndex]?.tag}
-              </div>
+              <div className="absolute top-4 left-4 z-10 bg-[#dc2626] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">{heroSlides[heroIndex]?.label}</div>
+              <div className="absolute top-4 right-4 z-10 bg-[#0a0a0a] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">{heroSlides[heroIndex]?.tag}</div>
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
                 {heroSlides.map((_, i) => (
-                  <button key={i} onClick={() => setHeroIndex(i)}
-                    className={`transition-all duration-300 rounded-full ${
-                      heroIndex === i ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/40 hover:bg-white/70'
-                    }`} />
+                  <button key={i} onClick={() => setHeroIdx(i)}
+                    className={`transition-all duration-300 rounded-full ${heroIndex === i ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/40 hover:bg-white/70'}`} />
                 ))}
               </div>
               <div className="absolute bottom-0 left-0 right-0 z-10 h-[2px] bg-white/20">
@@ -214,22 +162,43 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
         </section>
 
-        {/* ── BRAND TICKER ── */}
-        <section className="border-b border-gray-200 py-5 overflow-hidden bg-white">
-          <div className="ticker-wrap">
-            <div className="ticker-track">
-              {BRANDS.map((b, i) => (
-                <span key={i} className="inline-flex items-center gap-5 mx-8">
-                  <span className="text-base font-black tracking-widest text-[#0a0a0a] uppercase">{b}</span>
-                  <span className="text-[#dc2626] font-black text-xl leading-none">/</span>
-                </span>
-              ))}
-            </div>
+        {/* ── PERKS BAR ── */}
+        <section className="border-b border-gray-200 bg-[#0a0a0a]">
+          <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-800">
+            {PERKS.map(({ icon: Icon, title, sub }) => (
+              <div key={title} className="flex items-center gap-3 px-5 md:px-8 py-4 md:py-5">
+                <Icon size={18} className="text-[#dc2626] shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-white">{title}</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">{sub}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
+
+        {/* ── CATEGORY TICKER ── */}
+        {categories.length > 0 && (
+          <section className="border-b border-gray-200 py-5 bg-white">
+            <div className="ticker-wrap">
+              <div className="ticker-track">
+                {[0, 1].map(set => (
+                  <span key={set} className="ticker-set">
+                    {Array(Math.ceil(20 / categories.length)).fill(categories).flat().map((cat, i) => (
+                      <Link key={i} href={`/products?category=${cat.name}`}
+                        className="inline-flex items-center gap-5 mx-10 shrink-0 group">
+                        <span className="text-base font-black tracking-widest text-[#0a0a0a] uppercase group-hover:text-[#dc2626] transition-colors">{cat.name}</span>
+                        <span className="text-[#dc2626] font-black text-xl leading-none">/</span>
+                      </Link>
+                    ))}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ── SHOP BY CATEGORY ── */}
         {categories.length > 0 && (
@@ -238,48 +207,28 @@ export default function HomePage() {
               <div className="flex items-end justify-between mb-8">
                 <div>
                   <p className="section-label mb-2">[ 002 / CATEGORIES ]</p>
-                  <h2 className="font-black text-[1.8rem] md:text-[2.8rem] tracking-[-0.03em] leading-none text-[#0a0a0a]">
-                    Shop by category.
-                  </h2>
+                  <h2 className="font-black text-[1.8rem] md:text-[2.8rem] tracking-[-0.03em] leading-none text-[#0a0a0a]">Shop by category.</h2>
                 </div>
-                <Link href="/products"
-                  className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#dc2626] transition-colors">
+                <Link href="/products" className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#dc2626] transition-colors">
                   All products <ArrowRight size={14} />
                 </Link>
               </div>
               <div className="grid grid-cols-3 md:grid-cols-6 border-l border-t border-gray-200">
                 {categories.map((cat, i) => (
-                  <motion.div
-                    key={cat._id}
+                  <motion.div key={cat._id}
                     initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-40px' }}
                     transition={{ delay: i * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                    className="border-r border-b border-gray-200"
-                  >
-                    <Link
-                      href={`/products?category=${cat.name}`}
-                      className="group relative flex flex-col justify-end overflow-hidden min-h-[140px] md:min-h-[160px]"
-                    >
-                      {/* Image */}
-                      {cat.image ? (
-                        <img
-                          src={cat.image}
-                          alt={cat.name}
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-gray-100" />
-                      )}
-                      {/* Gradient overlay */}
+                    className="border-r border-b border-gray-200">
+                    <Link href={`/products?category=${cat.name}`}
+                      className="group relative flex flex-col justify-end overflow-hidden min-h-[140px] md:min-h-[160px]">
+                      {cat.image
+                        ? <img src={cat.image} alt={cat.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        : <div className="absolute inset-0 bg-gray-100" />}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                      {/* Content */}
                       <div className="relative z-10 p-5">
-                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#dc2626] mb-1">
-                          {String(i + 1).padStart(2, '0')}
-                        </p>
-                        <h3 className="font-black text-lg md:text-xl tracking-[-0.02em] text-white leading-tight">
-                          {cat.name}
-                        </h3>
+                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#dc2626] mb-1">{String(i + 1).padStart(2, '0')}</p>
+                        <h3 className="font-black text-lg md:text-xl tracking-[-0.02em] text-white leading-tight">{cat.name}</h3>
                         <div className="flex items-center gap-1 mt-2 text-xs font-semibold text-white/60 group-hover:text-white transition-colors">
                           Shop <ArrowRight size={11} className="group-hover:translate-x-1 transition-transform" />
                         </div>
@@ -292,30 +241,69 @@ export default function HomePage() {
           </section>
         )}
 
+        {/* ── FEATURED SPOTLIGHT ── */}
+        {spotlightProduct && !loading && (
+          <section className="border-b border-gray-200">
+            <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-12">
+              <p className="section-label mb-8">[ 003 / FEATURED DROP ]</p>
+              <div className="grid md:grid-cols-2 border border-gray-200">
+                {/* Image */}
+                <div className="relative overflow-hidden bg-gray-50 min-h-[280px] md:min-h-[380px]">
+                  <img src={spotlightProduct.image || 'https://placehold.co/600x400'} alt={spotlightProduct.name}
+                    className="w-full h-full object-cover absolute inset-0 hover:scale-105 transition-transform duration-700" />
+                  {spotlightProduct.offerPrice && (
+                    <span className="absolute top-4 left-4 bg-[#dc2626] text-white text-[10px] font-black tracking-widest uppercase px-3 py-1.5">
+                      {Math.round((1 - spotlightProduct.offerPrice / spotlightProduct.price) * 100)}% OFF
+                    </span>
+                  )}
+                </div>
+                {/* Info */}
+                <div className="flex flex-col justify-center p-8 md:p-12 border-t md:border-t-0 md:border-l border-gray-200">
+                  <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-[#dc2626] mb-3">
+                    {spotlightProduct.brand} · {spotlightProduct.category}
+                  </p>
+                  <h2 className="font-black text-[1.8rem] md:text-[2.5rem] tracking-[-0.03em] leading-[1.05] text-[#0a0a0a] mb-4">
+                    {spotlightProduct.name}
+                  </h2>
+                  {spotlightProduct.description && (
+                    <p className="text-sm text-gray-500 leading-relaxed mb-6 line-clamp-3">{spotlightProduct.description}</p>
+                  )}
+                  <div className="flex items-baseline gap-3 mb-8">
+                    <span className="font-black text-[2rem] text-[#0a0a0a]">
+                      ₹{(spotlightProduct.offerPrice || spotlightProduct.price)?.toLocaleString()}
+                    </span>
+                    {spotlightProduct.offerPrice && (
+                      <span className="text-base text-gray-400 line-through">₹{spotlightProduct.price?.toLocaleString()}</span>
+                    )}
+                  </div>
+                  <Link href={`/products/${spotlightProduct._id}`}
+                    className="flex items-center gap-2 bg-[#0a0a0a] text-white px-8 py-4 text-xs font-bold tracking-widest uppercase hover:bg-[#dc2626] transition-colors w-fit">
+                    View Product <ArrowRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* ── NEW & TRENDING ── */}
         <section className="max-w-[1400px] mx-auto px-4 md:px-6 pb-16 pt-10">
           <div className="flex items-end justify-between mb-8">
             <div>
-              <p className="section-label mb-2">[ 003 / CATALOGUE ]</p>
-              <h2 className="font-black text-[1.8rem] md:text-[2.8rem] tracking-[-0.03em] leading-none text-[#0a0a0a]">
-                New &amp; trending.
-              </h2>
+              <p className="section-label mb-2">[ 004 / CATALOGUE ]</p>
+              <h2 className="font-black text-[1.8rem] md:text-[2.8rem] tracking-[-0.03em] leading-none text-[#0a0a0a]">New &amp; trending.</h2>
             </div>
-            <Link href="/products"
-              className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#dc2626] transition-colors">
+            <Link href="/products" className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#dc2626] transition-colors">
               See full catalogue <ArrowRight size={14} />
             </Link>
           </div>
-
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border-l border-t border-gray-200">
               {Array(8).fill(0).map((_, i) => (
                 <div key={i} className="border-r border-b border-gray-200">
                   <div className="skeleton h-56 w-full" />
                   <div className="p-4 space-y-2">
-                    <div className="skeleton h-3 w-16" />
-                    <div className="skeleton h-4 w-full" />
-                    <div className="skeleton h-3 w-24" />
+                    <div className="skeleton h-3 w-16" /><div className="skeleton h-4 w-full" /><div className="skeleton h-3 w-24" />
                   </div>
                 </div>
               ))}
@@ -334,60 +322,88 @@ export default function HomePage() {
           )}
         </section>
 
-        {/* ── FLASH SALE BANNER ── */}
-        {flashOffer && (
-        <section className="bg-[#dc2626] text-white">
-          <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-12 md:py-16 grid md:grid-cols-2 gap-10 items-center">
-            <div>
-              <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-red-200 mb-4">
-                [ {flashOffer.badge || 'FLASH'} / {Math.ceil((new Date(flashOffer.endDate) - new Date()) / 3600000)}H ONLY ]
-              </p>
-              <h2 className="font-black text-[2.5rem] md:text-[4rem] leading-[0.9] tracking-[-0.03em] mb-3">
-                Up to -{flashOffer.type === 'percentage' ? `${flashOffer.value}%` : `₹${flashOffer.value}`}<br />this weekend.
-              </h2>
-              <p className="text-red-200 text-sm mb-6">{flashOffer.description}</p>
-              <Link href="/products"
-                className="inline-flex items-center gap-2 bg-white text-[#dc2626] px-8 py-3.5 text-sm font-bold hover:bg-gray-100 transition-colors">
-                Shop the sale <ArrowRight size={14} />
-              </Link>
+        {/* ── WHY CHOOSE US ── */}
+        <section className="border-t border-b border-gray-200">
+          <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-12">
+            <div className="flex items-end justify-between mb-10">
+              <div>
+                <p className="section-label mb-2">[ 005 / WHY US ]</p>
+                <h2 className="font-black text-[1.8rem] md:text-[2.8rem] tracking-[-0.03em] leading-none text-[#0a0a0a]">Why Robo Flytech.</h2>
+              </div>
             </div>
-
-            {/* Featured deal cards */}
-            <div className="grid grid-cols-2 gap-3">
-              {!loading && products.filter(p => p.offerPrice).slice(0, 2).concat(
-                products.filter(p => !p.offerPrice).slice(0, 2)
-              ).slice(0, 2).map(p => (
-                <Link key={p._id} href={`/products/${p._id}`}
-                  className="bg-white group overflow-hidden">
-                  <img src={p.image || 'https://placehold.co/300x200'} alt={p.name}
-                    className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300" />
-                  <div className="p-3">
-                    <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase">{p.brand}</p>
-                    <p className="text-sm font-bold text-[#0a0a0a] truncate">{p.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-sm font-black text-[#0a0a0a]">
-                        ₹{(p.offerPrice || p.price)?.toLocaleString()}
-                      </p>
-                      {p.offerPrice && (
-                        <p className="text-xs text-gray-400 line-through">₹{p.price?.toLocaleString()}</p>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-              {loading && Array(2).fill(0).map((_, i) => (
-                <div key={i} className="bg-white">
-                  <div className="skeleton h-36 w-full" />
-                  <div className="p-3 space-y-2">
-                    <div className="skeleton h-3 w-16" />
-                    <div className="skeleton h-4 w-full" />
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 border-l border-t border-gray-200">
+              {WHY_US.map(({ num, title, body }, i) => (
+                <motion.div key={num}
+                  initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ delay: i * 0.08, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                  className="border-r border-b border-gray-200 p-6 md:p-8 group hover:bg-gray-50 transition-colors">
+                  <p className="text-[#dc2626] font-black text-[2rem] leading-none tracking-[-0.04em] mb-4">{num}</p>
+                  <h3 className="font-black text-base tracking-[-0.02em] text-[#0a0a0a] mb-2">{title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">{body}</p>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
+
+        {/* ── FLASH SALE BANNER ── */}
+        {flashOffer && (
+          <section className="bg-[#dc2626] text-white">
+            <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-12 md:py-16 grid md:grid-cols-2 gap-10 items-center">
+              <div>
+                <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-red-200 mb-4">
+                  [ {flashOffer.badge || 'FLASH'} / {Math.ceil((new Date(flashOffer.endDate) - new Date()) / 3600000)}H ONLY ]
+                </p>
+                <h2 className="font-black text-[2.5rem] md:text-[4rem] leading-[0.9] tracking-[-0.03em] mb-3">
+                  Up to -{flashOffer.type === 'percentage' ? `${flashOffer.value}%` : `₹${flashOffer.value}`}<br />this weekend.
+                </h2>
+                <p className="text-red-200 text-sm mb-6">{flashOffer.description}</p>
+                <Link href="/products" className="inline-flex items-center gap-2 bg-white text-[#dc2626] px-8 py-3.5 text-sm font-bold hover:bg-gray-100 transition-colors">
+                  Shop the sale <ArrowRight size={14} />
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {!loading && products.filter(p => p.offerPrice).slice(0, 2).concat(products.filter(p => !p.offerPrice).slice(0, 2)).slice(0, 2).map(p => (
+                  <Link key={p._id} href={`/products/${p._id}`} className="bg-white group overflow-hidden">
+                    <img src={p.image || 'https://placehold.co/300x200'} alt={p.name}
+                      className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <div className="p-3">
+                      <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase">{p.brand}</p>
+                      <p className="text-sm font-bold text-[#0a0a0a] truncate">{p.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-sm font-black text-[#0a0a0a]">₹{(p.offerPrice || p.price)?.toLocaleString()}</p>
+                        {p.offerPrice && <p className="text-xs text-gray-400 line-through">₹{p.price?.toLocaleString()}</p>}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
         )}
+
+        {/* ── FULL WIDTH CTA ── */}
+        <section className="bg-[#0a0a0a]">
+          <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-16 md:py-20 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div>
+              <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-gray-500 mb-3">[ 006 / GET STARTED ]</p>
+              <h2 className="font-black text-[2rem] md:text-[3.5rem] leading-[0.92] tracking-[-0.04em] text-white">
+                Your next<br />favourite gear<br />is one click <span className="text-[#dc2626] italic">away.</span>
+              </h2>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/products"
+                className="flex items-center gap-2 bg-white text-[#0a0a0a] px-8 py-4 text-sm font-bold hover:bg-[#dc2626] hover:text-white transition-colors">
+                Browse all products <ArrowRight size={15} />
+              </Link>
+              <Link href="/about"
+                className="flex items-center gap-2 border border-white/20 text-white px-8 py-4 text-sm font-semibold hover:border-white transition-colors">
+                About us
+              </Link>
+            </div>
+          </div>
+        </section>
 
       </main>
       <Footer />

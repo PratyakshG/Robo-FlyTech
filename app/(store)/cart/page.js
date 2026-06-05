@@ -58,7 +58,12 @@ export default function CartPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] font-semibold tracking-widest uppercase text-gray-400 mb-0.5">{item.brand}</p>
                         <h3 className="font-bold text-sm text-[#0a0a0a] truncate">{item.name}</h3>
-                        <p className="text-[#0a0a0a] font-black mt-1">₹{item.price.toLocaleString()}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-[#0a0a0a] font-black">₹{(item.offerPrice || item.price).toLocaleString()}</p>
+                          {item.offerPrice && (
+                            <p className="text-xs text-gray-400 line-through">₹{item.price.toLocaleString()}</p>
+                          )}
+                        </div>
                       </div>
                       <div className="flex flex-col items-end justify-between shrink-0">
                         <motion.button whileTap={{ scale: 0.9 }}

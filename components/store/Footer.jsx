@@ -18,7 +18,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-[#0a0a0a] text-white">
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-12 md:py-16 grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-10">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-12 md:py-16 grid grid-cols-2 md:grid-cols-3 gap-5 md:gap-8">
 
         {/* Newsletter */}
         <div className="md:col-span-1">
@@ -79,7 +79,7 @@ export default function Footer() {
       <div className="border-t border-gray-800">
         <div className="max-w-[1400px] mx-auto px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-[11px] text-gray-600 tracking-widest uppercase">
-            © 2026 VOLT. ELECTRONICS / ALL RIGHTS RESERVED.
+            © 2026 ROBO FLYTECH / ALL RIGHTS RESERVED.
           </p>
           <div className="flex items-center gap-6">
             {['PRIVACY', 'TERMS', 'COOKIES', 'ADMIN'].map(l => (

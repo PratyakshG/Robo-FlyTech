@@ -21,13 +21,13 @@ export default function ProductDetailPage() {
   const { addToCart, updateQty, removeFromCart, cartItems } = useCart();
 
   useEffect(() => {
-    getProduct(id).then(r => {
-      setProduct(r.data);
-      setActiveImg(0);
-      // fetch related by same category
-      getProductsWithOffers({ limit: 5 }).then(rel => {
-        const offerMap = {};
-        (rel.data || []).forEach(p => { offerMap[p._id] = p; });
+    getProductsWithOffers({ limit: 0 }).then(offersRes => {
+      const offerMap = {};
+      (offersRes.data || []).forEach(p => { offerMap[p._id] = p; });
+      getProduct(id).then(r => {
+        const prod = offerMap[r.data._id] || r.data;
+        setProduct(prod);
+        setActiveImg(0);
         getProducts({ category: r.data.category, limit: 5 }).then(res => {
           const prods = (res.data.products || [])
             .filter(p => p._id !== id)
@@ -271,11 +271,10 @@ export default function ProductDetailPage() {
               )}
 
               {/* Perks */}
-              <div className="grid grid-cols-3 border border-gray-100 divide-x divide-gray-100 mb-6">
+              <div className="grid grid-cols-2 border border-gray-100 divide-x divide-gray-100 mb-6">
                 {[
-                  { Icon: Truck,       title: 'Free shipping',  sub: 'Over ₹999' },
-                  { Icon: RotateCcw,   title: '30-day returns', sub: 'No questions' },
-                  { Icon: ShieldCheck, title: '1-yr warranty',  sub: 'Manufacturer' },
+                  { Icon: Truck,       title: 'Free shipping', sub: 'Over ₹999' },
+                  { Icon: ShieldCheck, title: '1-yr warranty', sub: 'Manufacturer' },
                 ].map(({ Icon, title, sub }) => (
                   <div key={title} className="flex flex-col items-center gap-1.5 py-4 px-2 text-center">
                     <Icon size={16} className="text-gray-400" />

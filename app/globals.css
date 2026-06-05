@@ -270,16 +270,24 @@
   /* ── Ticker ── */
   .ticker-wrap {
     overflow: hidden;
-    white-space: nowrap;
+    width: 100%;
   }
 
   .ticker-track {
-    display: inline-flex;
-    animation: ticker 30s linear infinite;
+    display: flex;
+    width: max-content;
+    animation: ticker 40s linear infinite;
+    will-change: transform;
+  }
+
+  .ticker-set {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
   }
 
   @keyframes ticker {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
   }
 }

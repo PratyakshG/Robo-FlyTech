@@ -1,26 +1,44 @@
+'use client';
 import Link from 'next/link';
-import { CheckCircle, ShoppingBag, Package } from 'lucide-react';
+import { ShoppingBag, Package, CheckCheck } from 'lucide-react';
+import Navbar from '@/components/store/Navbar';
+import Footer from '@/components/store/Footer';
 
 export default function OrderSuccessPage() {
   return (
-    <div className="min-h-screen bg-[#f5f5f0] flex flex-col items-center justify-center text-center gap-5 px-4">
-      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-        <CheckCircle size={40} className="text-green-600" />
-      </div>
-      <h1 className="classic-heading text-3xl text-gray-900">Order Placed!</h1>
-      <p className="text-gray-500 text-sm max-w-xs">
-        Thank you for your purchase. We'll process and ship your order shortly.
-      </p>
-      <div className="flex gap-4 mt-2 flex-wrap justify-center">
-        <Link href="/products"
-          className="btn-primary px-6 py-2.5 flex items-center gap-2">
-          <ShoppingBag size={14} /> Continue Shopping
-        </Link>
-        <Link href="/orders"
-          className="btn-outline px-6 py-2.5 flex items-center gap-2">
-          <Package size={14} /> My Orders
-        </Link>
-      </div>
-    </div>
+    <>
+      <Navbar />
+      <main className="bg-white min-h-[80vh] flex items-center justify-center px-4 py-16">
+        <div className="max-w-md w-full text-center">
+          {/* Icon */}
+          <div className="w-16 h-16 bg-[#0a0a0a] flex items-center justify-center mx-auto mb-6">
+            <CheckCheck size={32} className="text-white" />
+          </div>
+
+          <p className="section-label mb-3">[ ORDER CONFIRMED ]</p>
+          <h1 className="font-black text-[2.5rem] tracking-[-0.04em] leading-none text-[#0a0a0a] mb-4">
+            Order placed<br />successfully!
+          </h1>
+          <p className="text-sm text-gray-500 leading-relaxed mb-8">
+            Thank you for your purchase. We'll process and ship your order shortly. You'll receive a confirmation soon.
+          </p>
+
+          {/* Divider */}
+          <div className="border-t border-gray-200 mb-8" />
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/products"
+              className="flex items-center justify-center gap-2 bg-[#0a0a0a] text-white px-7 py-3.5 text-xs font-bold tracking-widest uppercase hover:bg-[#dc2626] transition-colors">
+              <ShoppingBag size={14} /> Continue Shopping
+            </Link>
+            <Link href="/profile"
+              className="flex items-center justify-center gap-2 border border-[#0a0a0a] text-[#0a0a0a] px-7 py-3.5 text-xs font-bold tracking-widest uppercase hover:bg-[#0a0a0a] hover:text-white transition-colors">
+              <Package size={14} /> Track Orders
+            </Link>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </>
   );
 }

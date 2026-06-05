@@ -3,15 +3,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingBag, Users, LogOut, Tag, Zap } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Users, LogOut, Tag, Zap, Image } from 'lucide-react';
 
 const links = [
-  { href: '/admin',            label: 'Dashboard',  icon: LayoutDashboard },
-  { href: '/admin/products',   label: 'Products',   icon: Package },
-  { href: '/admin/categories', label: 'Categories', icon: Tag },
-  { href: '/admin/offers',     label: 'Offers',     icon: Zap },
-  { href: '/admin/orders',     label: 'Orders',     icon: ShoppingBag },
-  { href: '/admin/customers',  label: 'Customers',  icon: Users },
+  { href: '/admin',              label: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/admin/products',     label: 'Products',    icon: Package },
+  { href: '/admin/categories',   label: 'Categories',  icon: Tag },
+  { href: '/admin/offers',       label: 'Offers',      icon: Zap },
+  { href: '/admin/hero-slides',  label: 'Hero Slides', icon: Image },
+  { href: '/admin/orders',       label: 'Orders',      icon: ShoppingBag },
+  { href: '/admin/customers',    label: 'Customers',   icon: Users },
 ];
 
 export default function Sidebar({ onClose }) {

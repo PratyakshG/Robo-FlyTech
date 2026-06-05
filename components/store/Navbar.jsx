@@ -6,16 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Search, User, ShoppingBag, Menu, X, LayoutDashboard, LogOut, ChevronDown } from 'lucide-react';
-import { getCategories } from '@/lib/api';
-
-const TICKER_ITEMS = [
-  '⚡ FLASH SALE — UP TO 35% OFF AUDIO — ENDS IN 47H',
-  '🚚 FREE EXPRESS SHIPPING OVER ₹999',
-  '↩ 30-DAY RETURNS / 2-YEAR WARRANTY',
-  '⚡ FLASH SALE — UP TO 35% OFF AUDIO — ENDS IN 47H',
-  '🚚 FREE EXPRESS SHIPPING OVER ₹999',
-  '↩ 30-DAY RETURNS / 2-YEAR WARRANTY',
-];
+import { getCategories, getActiveOffers } from '@/lib/api';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -27,6 +18,7 @@ export default function Navbar() {
   const [searchVal, setSearchVal] = useState('');
   const [catOpen, setCatOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [tickerItems, setTickerItems] = useState(['🚚 FREE EXPRESS SHIPPING OVER ₹999']);
   const catCloseTimer = useRef(null);
 
   const openCat  = () => { clearTimeout(catCloseTimer.current); setCatOpen(true); };
@@ -34,6 +26,15 @@ export default function Navbar() {
 
   useEffect(() => {
     getCategories().then(r => setCategories(r.data || [])).catch(() => {});
+    getActiveOffers().then(r => {
+      const offers = r.data || [];
+      const items = ['🚚 FREE EXPRESS SHIPPING OVER ₹999'];
+      offers.forEach(o => {
+        const val = o.type === 'percentage' ? `${o.value}% OFF` : `₹${o.value} OFF`;
+        items.unshift(`⚡ ${o.name?.toUpperCase() || 'FLASH SALE'} — UP TO ${val}`);
+      });
+      setTickerItems(items);
+    }).catch(() => {});
   }, []);
 
   const handleLogout = () => { logout(); router.push('/'); };
@@ -44,9 +45,13 @@ export default function Navbar() {
       <div className="bg-[#dc2626] text-white overflow-hidden h-8 flex items-center">
         <div className="ticker-wrap w-full">
           <div className="ticker-track">
-            {TICKER_ITEMS.map((item, i) => (
-              <span key={i} className="inline-block text-[11px] font-semibold tracking-widest uppercase mx-10">
-                {item}
+            {[0, 1].map(set => (
+              <span key={set} className="ticker-set">
+                {Array(Math.ceil(10 / Math.max(tickerItems.length, 1))).fill(tickerItems).flat().map((item, i) => (
+                  <span key={i} className="inline-block text-[11px] font-semibold tracking-widest uppercase mx-10 shrink-0">
+                    {item}
+                  </span>
+                ))}
               </span>
             ))}
           </div>
@@ -178,6 +183,17 @@ export default function Navbar() {
                 )}
               </AnimatePresence>
             </Link>
+
+            {/* Profile icon — mobile only */}
+            {user ? (
+              <Link href="/profile" className="lg:hidden p-2 text-gray-600 hover:text-[#0a0a0a] transition-colors">
+                <User size={18} strokeWidth={1.8} />
+              </Link>
+            ) : (
+              <Link href="/login" className="lg:hidden p-2 text-gray-600 hover:text-[#0a0a0a] transition-colors">
+                <User size={18} strokeWidth={1.8} />
+              </Link>
+            )}
 
             {/* Mobile menu toggle */}
             <button className="lg:hidden p-2 text-gray-600" onClick={() => setMobileOpen(!mobileOpen)}>
