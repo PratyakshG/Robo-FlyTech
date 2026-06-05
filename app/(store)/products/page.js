@@ -1,4 +1,5 @@
 'use client';
+import { Suspense } from 'react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getProducts, getProductFilters, getProductsWithOffers } from '@/lib/api';
@@ -8,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, SlidersHorizontal, X } from 'lucide-react';
 import Footer from '@/components/store/Footer';
 
-export default function ProductsPage() {
+function ProductsContent() {
   const searchParams = useSearchParams();
 
   const [products, setProducts]         = useState([]);
@@ -371,5 +372,17 @@ export default function ProductsPage() {
       </main>
       <Footer />
     </>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#0a0a0a] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
   );
 }
