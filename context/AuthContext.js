@@ -5,10 +5,14 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('techstore_user');
-    if (stored) setUser(JSON.parse(stored));
+    try {
+      const stored = localStorage.getItem('techstore_user');
+      if (stored) setUser(JSON.parse(stored));
+    } catch {}
+    setMounted(true);
   }, []);
 
   const login = (userData) => {
@@ -22,7 +26,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, mounted }}>
       {children}
     </AuthContext.Provider>
   );

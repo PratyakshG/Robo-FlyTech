@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Trash2, ArrowRight, ShoppingBag, Truck } from 'lucide-react';
 
 export default function CartPage() {
-  const { cartItems, removeFromCart, updateQty, totalPrice, clearCart } = useCart();
+  const { cartItems, removeFromCart, updateQty, totalPrice, mrpTotal, clearCart } = useCart();
 
   if (cartItems.length === 0) return (
     <>
@@ -79,7 +79,7 @@ export default function CartPage() {
                           </motion.button>
                           <span className="w-8 text-center text-sm font-bold">{item.qty}</span>
                           <motion.button whileTap={{ scale: 0.9 }}
-                            onClick={() => updateQty(item._id, item.qty + 1)}
+                            onClick={() => updateQty(item._id, Math.min(item.stock || 99, item.qty + 1))}
                             className="w-8 h-8 flex items-center justify-center text-[#0a0a0a] hover:bg-gray-100 border-l border-[#0a0a0a] text-base">
                             +
                           </motion.button>
@@ -100,9 +100,21 @@ export default function CartPage() {
                 className="bg-white border border-gray-200 p-5 h-fit">
                 <h2 className="font-black text-base tracking-tight text-[#0a0a0a] mb-4">Order Summary</h2>
                 <div className="space-y-3">
+                  {mrpTotal > totalPrice && (
+                    <div className="flex justify-between text-sm text-gray-400">
+                      <span>MRP</span>
+                      <span className="line-through">₹{mrpTotal.toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Subtotal</span><span>₹{totalPrice.toLocaleString()}</span>
                   </div>
+                  {mrpTotal > totalPrice && (
+                    <div className="flex justify-between text-sm text-green-600 font-semibold">
+                      <span>Discount</span>
+                      <span>- ₹{(mrpTotal - totalPrice).toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Shipping</span>
                     <span>
@@ -113,7 +125,7 @@ export default function CartPage() {
                   </div>
                   {shipping > 0 && (
                     <p className="text-xs text-gray-400 flex items-center gap-1">
-                      <Truck size={11} /> Free shipping above ₹999
+                      <Truck size={11} /> Fast shipping · Free above ₹999
                     </p>
                   )}
                   <hr className="classic-divider" />

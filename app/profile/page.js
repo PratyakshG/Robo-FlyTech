@@ -5,9 +5,9 @@ import Navbar from '@/components/store/Navbar';
 import Footer from '@/components/store/Footer';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/Toast';
-import { getProfile, updateProfile, changePassword, getMyOrders, getAddresses, addAddress, deleteAddress } from '@/lib/api';
+import { getProfile, updateProfile, changePassword, getMyOrders, getAddresses, addAddress, deleteAddress, getOrderById } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MapPin, Lock, ShoppingBag, Save, Eye, EyeOff, Package, LogOut, Settings, Heart, X } from 'lucide-react';
+import { User, MapPin, Lock, ShoppingBag, Save, Eye, EyeOff, Package, LogOut, Settings, Heart, X, ChevronRight, Truck, CreditCard, Tag } from 'lucide-react';
 
 const TABS = [
   { id: 'orders',   label: 'Orders',    icon: ShoppingBag },
@@ -23,7 +23,7 @@ const statusStyle = (s) => {
 };
 
 export default function ProfilePage() {
-  const { user, login, logout } = useAuth();
+  const { user, login, logout, mounted } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
   const [tab, setTab] = useState('orders');
@@ -40,13 +40,26 @@ export default function ProfilePage() {
   const [addrModal, setAddrModal] = useState(false);
   const [addrForm, setAddrForm] = useState(EMPTY_ADDR);
   const [addrLoading, setAddrLoading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [orderDetailLoading, setOrderDetailLoading] = useState(false);
+
+  const openOrderDetail = async (orderId) => {
+    setOrderDetailLoading(true);
+    setSelectedOrder({ _id: orderId });
+    try {
+      const { data } = await getOrderById(orderId);
+      setSelectedOrder(data);
+    } catch { setSelectedOrder(null); }
+    finally { setOrderDetailLoading(false); }
+  };
 
   useEffect(() => {
-    document.body.style.overflow = addrModal ? 'hidden' : '';
+    document.body.style.overflow = (addrModal || selectedOrder) ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
-  }, [addrModal]);
+  }, [addrModal, selectedOrder]);
 
   useEffect(() => {
+    if (!mounted) return;
     if (!user) { router.push('/login'); return; }
     getProfile().then(r => {
       setProfile(r.data);
@@ -54,7 +67,7 @@ export default function ProfilePage() {
     });
     getAddresses().then(r => setAddresses(r.data || [])).catch(() => {});
     getMyOrders().then(r => setOrders(r.data));
-  }, []);
+  }, [mounted, user]);
 
   const handleProfileSave = async (e) => {
     e.preventDefault(); setLoading(true);
@@ -99,7 +112,7 @@ export default function ProfilePage() {
     finally { setLoading(false); }
   };
 
-  if (!profile) return (
+  if (!mounted || !profile) return (
     <>
       <Navbar />
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -214,7 +227,13 @@ export default function ProfilePage() {
                             </div>
                             <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                               <p className="text-xs text-gray-500">{order.items?.length} item{order.items?.length !== 1 ? 's' : ''} · {order.paymentMethod}</p>
-                              <p className="text-sm font-black text-[#0a0a0a]">₹{order.totalPrice?.toLocaleString()}</p>
+                              <div className="flex items-center gap-3">
+                                <p className="text-sm font-black text-[#0a0a0a]">₹{order.totalPrice?.toLocaleString()}</p>
+                                <button onClick={() => openOrderDetail(order._id)}
+                                  className="flex items-center gap-1.5 text-xs font-bold border border-gray-200 px-3 py-1.5 text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white hover:border-[#0a0a0a] transition-colors">
+                                  <Eye size={11} /> Details
+                                </button>
+                              </div>
                             </div>
                           </motion.div>
                         ))}
@@ -370,6 +389,159 @@ export default function ProfilePage() {
                   </div>
                 </form>
               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Order Detail Modal */}
+      <AnimatePresence>
+        {selectedOrder && (
+          <>
+            <motion.div key="order-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setSelectedOrder(null)} className="fixed inset-0 bg-black/40 z-50" />
+            <motion.div key="order-drawer"
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'tween', duration: 0.3 }}
+              className="fixed inset-x-0 bottom-0 z-50 bg-white shadow-2xl flex flex-col md:inset-y-0 md:inset-x-auto md:right-0 md:w-full md:max-w-md"
+              style={{ height: '70%', borderRadius: '16px 16px 0 0' }}>
+              <div className="flex justify-center pt-3 pb-1 md:hidden shrink-0"><div className="w-10 h-1 bg-gray-200 rounded-full" /></div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white">
+                <div>
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400">Order Details</p>
+                  <p className="font-black text-sm text-[#0a0a0a]">#{selectedOrder._id?.slice(-8).toUpperCase()}</p>
+                </div>
+                <button onClick={() => setSelectedOrder(null)} className="p-1.5 text-gray-400 hover:text-[#0a0a0a]">
+                  <X size={18} />
+                </button>
+              </div>
+
+              {orderDetailLoading ? (
+                <div className="flex-1 flex items-center justify-center overflow-y-auto">
+                  <div className="w-8 h-8 border-2 border-[#0a0a0a] border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto p-5 space-y-4">
+
+                  {/* Status + Date */}
+                  <div className="border border-gray-100 p-4">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 ${statusStyle(selectedOrder.status)}`}>
+                        {selectedOrder.status}
+                      </span>
+                      <p className="text-[10px] text-gray-400">
+                        {selectedOrder.createdAt && new Date(selectedOrder.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Delivery Address */}
+                  <div className="border border-gray-100 p-4">
+                    <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-2 flex items-center gap-1.5">
+                      <MapPin size={10} /> Delivery Address
+                    </p>
+                    <p className="text-sm font-bold text-[#0a0a0a]">{selectedOrder.shippingAddress?.fullName}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{selectedOrder.shippingAddress?.phone}</p>
+                    <p className="text-xs text-gray-500">{selectedOrder.shippingAddress?.address}</p>
+                    <p className="text-xs text-gray-500">{selectedOrder.shippingAddress?.city} — {selectedOrder.shippingAddress?.pin}, {selectedOrder.shippingAddress?.country}</p>
+                  </div>
+
+                  {/* Items */}
+                  <div>
+                    <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-2 flex items-center gap-1.5">
+                      <Tag size={10} /> Items ({selectedOrder.items?.length})
+                    </p>
+                    <div className="divide-y divide-gray-100 border border-gray-100">
+                      {selectedOrder.items?.map((item, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3">
+                          <img src={item.image || 'https://placehold.co/48x48?text=...'}
+                            alt={item.name} className="w-12 h-12 object-cover border border-gray-100 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-[#0a0a0a] leading-tight">{item.name}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">Qty: {item.quantity} × ₹{item.price?.toLocaleString()}</p>
+                          </div>
+                          <p className="text-sm font-black text-[#0a0a0a] shrink-0">
+                            ₹{(item.price * item.quantity)?.toLocaleString()}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Price Summary */}
+                  <div className="border border-gray-100 p-4 space-y-2">
+                    <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-2 flex items-center gap-1.5">
+                      <CreditCard size={10} /> Payment Summary
+                    </p>
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Payment Method</span>
+                      <span className="font-semibold text-[#0a0a0a]">{selectedOrder.paymentMethod}</span>
+                    </div>
+                    <div className="border-t border-dashed border-gray-100 my-1" />
+                    {selectedOrder.originalItemsPrice > selectedOrder.itemsPrice && (
+                      <div className="flex justify-between text-sm text-gray-400">
+                        <span>MRP Total</span>
+                        <span className="line-through">₹{selectedOrder.originalItemsPrice?.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Items Total</span>
+                      <span>₹{selectedOrder.itemsPrice?.toLocaleString()}</span>
+                    </div>
+                    {(() => {
+                      const itemsOffer = selectedOrder.items?.reduce((s, item) => {
+                        const mrp = item.originalPrice || item.price;
+                        return s + (mrp - item.price) * item.quantity;
+                      }, 0) || 0;
+                      const offerSave = selectedOrder.originalItemsPrice > selectedOrder.itemsPrice
+                        ? selectedOrder.originalItemsPrice - selectedOrder.itemsPrice
+                        : itemsOffer;
+                      return offerSave > 0 ? (
+                        <div className="flex justify-between text-sm text-green-600 font-semibold">
+                          <span>Offer Discount</span>
+                          <span>- ₹{offerSave.toLocaleString()}</span>
+                        </div>
+                      ) : null;
+                    })()}
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Delivery</span>
+                      <span className={selectedOrder.shippingPrice === 0 ? 'text-green-600 font-semibold' : ''}>
+                        {selectedOrder.shippingPrice === 0 ? 'FREE' : `₹${selectedOrder.shippingPrice}`}
+                      </span>
+                    </div>
+                    {selectedOrder.discount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600 font-semibold">
+                        <span>Coupon {selectedOrder.couponCode ? `(${selectedOrder.couponCode})` : ''}</span>
+                        <span>- ₹{selectedOrder.discount?.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-black text-[#0a0a0a] border-t border-gray-200 pt-2">
+                      <span>Grand Total</span>
+                      <span>₹{selectedOrder.totalPrice?.toLocaleString()}</span>
+                    </div>
+                    {(() => {
+                      const itemsOffer = selectedOrder.items?.reduce((s, item) => {
+                        const mrp = item.originalPrice || item.price;
+                        return s + (mrp - item.price) * item.quantity;
+                      }, 0) || 0;
+                      const offerSave = selectedOrder.originalItemsPrice > selectedOrder.itemsPrice
+                        ? selectedOrder.originalItemsPrice - selectedOrder.itemsPrice
+                        : itemsOffer;
+                      const deliverySave = selectedOrder.shippingPrice === 0 ? 99 : 0;
+                      const couponSave = selectedOrder.discount || 0;
+                      const totalSave = offerSave + deliverySave + couponSave;
+                      return totalSave > 0 ? (
+                        <p className="text-[11px] text-green-600 font-semibold bg-green-50 px-3 py-1.5">
+                          🎉 You saved ₹{totalSave.toLocaleString()} on this order
+                        </p>
+                      ) : null;
+                    })()}
+                  </div>
+
+                </div>
+              )}
             </motion.div>
           </>
         )}

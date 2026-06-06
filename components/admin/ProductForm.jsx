@@ -69,6 +69,13 @@ export default function ProductForm({ initial, onSuccess, onClose }) {
     specifications: data.specifications?.length > 0
       ? data.specifications
       : [{ label: '', value: '' }],
+    warranty:        data.warranty        || '',
+    warrantyEnabled: data.warrantyEnabled  || false,
+    warrantyDuration:data.warrantyDuration || 1,
+    warrantyUnit:    data.warrantyUnit     || 'Years',
+    returnsEnabled: data.returnsEnabled || false,
+    returnDays:     data.returnDays     || 7,
+    freeShipping:   data.freeShipping   || false,
   });
   const [categories, setCategories] = useState([]);
   const [error, setError]       = useState('');
@@ -310,6 +317,85 @@ export default function ProductForm({ initial, onSuccess, onClose }) {
         )}
       </div>
 
+      {/* Warranty Toggle */}
+      <div className="border border-gray-200">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div>
+            <p className="text-xs font-bold text-[#0a0a0a]">Warranty</p>
+            <p className="text-[10px] text-gray-400">Show warranty info on product page</p>
+          </div>
+          <button type="button" onClick={() => set('warrantyEnabled', !form.warrantyEnabled)}
+            className={`w-10 h-5 rounded-full transition-colors relative ${
+              form.warrantyEnabled ? 'bg-[#0a0a0a]' : 'bg-gray-200'
+            }`}>
+            <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+              form.warrantyEnabled ? 'left-5' : 'left-0.5'
+            }`} />
+          </button>
+        </div>
+        {form.warrantyEnabled && (
+          <div className="px-4 pb-4 border-t border-gray-100 pt-3">
+            <label className="block text-[10px] text-gray-400 uppercase tracking-wider mb-2">Warranty Duration</label>
+            <div className="flex gap-2">
+              <input
+                type="number" min="1" max="99"
+                className="input-field w-24 text-sm"
+                value={form.warrantyDuration}
+                onChange={e => set('warrantyDuration', parseInt(e.target.value) || 1)}
+              />
+              <select className="input-field flex-1 text-sm"
+                value={form.warrantyUnit}
+                onChange={e => set('warrantyUnit', e.target.value)}>
+                <option value="Days">Days</option>
+                <option value="Months">Months</option>
+                <option value="Years">Years</option>
+              </select>
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1.5">
+              Displays as: <span className="font-semibold text-[#0a0a0a]">{form.warrantyDuration} {form.warrantyUnit} Warranty</span>
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Returns */}
+      <div className="flex items-center justify-between border border-gray-200 px-4 py-3">
+        <div>
+          <p className="text-xs font-bold text-[#0a0a0a]">Easy Returns</p>
+          <p className="text-[10px] text-gray-400">Show returns policy on product page</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {form.returnsEnabled && (
+            <input className="input-field w-20 text-xs" type="number" min="1" max="30"
+              value={form.returnDays} onChange={e => set('returnDays', parseInt(e.target.value) || 7)}
+              title="Return days" />
+          )}
+          <button type="button" onClick={() => set('returnsEnabled', !form.returnsEnabled)}
+            className={`w-10 h-5 rounded-full transition-colors relative ${
+              form.returnsEnabled ? 'bg-[#0a0a0a]' : 'bg-gray-200'
+            }`}>
+            <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+              form.returnsEnabled ? 'left-5' : 'left-0.5'
+            }`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Free Shipping */}
+      <div className="flex items-center justify-between border border-gray-200 px-4 py-3">
+        <div>
+          <p className="text-xs font-bold text-[#0a0a0a]">Free Shipping</p>
+          <p className="text-[10px] text-gray-400">Enable free shipping for this product</p>
+        </div>
+        <button type="button" onClick={() => set('freeShipping', !form.freeShipping)}
+          className={`w-10 h-5 rounded-full transition-colors relative ${
+            form.freeShipping ? 'bg-[#0a0a0a]' : 'bg-gray-200'
+          }`}>
+          <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+            form.freeShipping ? 'left-5' : 'left-0.5'
+          }`} />
+        </button>
+      </div>
 
       <div className="flex gap-3 pt-2">
         <button type="button" onClick={onClose}

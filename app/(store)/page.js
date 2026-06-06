@@ -9,7 +9,7 @@ import { ArrowRight, Zap, Truck, ShieldCheck, RotateCcw, Headphones } from 'luci
 import Footer from '@/components/store/Footer';
 
 const PERKS = [
-  { icon: Truck,        title: 'Free Shipping',    sub: 'On orders over ₹999' },
+  { icon: Truck,        title: 'Fast Shipping',    sub: 'Quick delivery on all orders' },
   { icon: ShieldCheck,  title: 'Secure Payments',  sub: 'UPI, Cards & COD' },
   { icon: Headphones,   title: '24/7 Support',     sub: 'We\'re always here' },
   { icon: RotateCcw,    title: 'Easy Returns',      sub: 'Hassle-free process' },

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { getAdminOrders, updateOrderStatus } from '@/lib/api';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, ChevronDown } from 'lucide-react';
+import { X, Eye, Package, Truck, ShieldCheck, User, MapPin, CreditCard, Tag } from 'lucide-react';
 
 const STATUSES = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
@@ -38,31 +38,37 @@ export default function AdminOrdersPage() {
         <table className="classic-table">
           <thead>
             <tr>
-              {['Order ID', 'Customer', 'Phone', 'Items', 'Total', 'Date', 'Status', 'Update'].map(h => (
+              {['Order ID', 'Customer', 'Items', 'Total', 'Payment', 'Date', 'Status', 'Update', ''].map(h => (
                 <th key={h}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {orders.map(o => (
-              <tr key={o._id} className="cursor-pointer" onClick={() => setSelected(o)}>
+              <tr key={o._id}>
                 <td className="font-mono text-xs text-gray-400">#{o._id.slice(-8).toUpperCase()}</td>
                 <td>
                   <p className="font-medium text-gray-800">{o.user?.name}</p>
                   <p className="text-xs text-gray-400">{o.user?.email}</p>
                 </td>
-                <td className="text-sm text-gray-600">{o.shippingAddress?.phone || '—'}</td>
-                <td className="text-sm text-gray-600">{o.items?.length}</td>
+                <td className="text-sm text-gray-600">{o.items?.length} item{o.items?.length !== 1 ? 's' : ''}</td>
                 <td className="text-green-700 font-semibold">₹{o.totalPrice?.toLocaleString()}</td>
-                <td className="text-gray-400 text-xs">{new Date(o.createdAt).toLocaleDateString()}</td>
+                <td className="text-xs text-gray-500">{o.paymentMethod}</td>
+                <td className="text-gray-400 text-xs">{new Date(o.createdAt).toLocaleDateString('en-IN')}</td>
                 <td><span className={statusColor(o.status)}>{o.status}</span></td>
-                <td onClick={e => e.stopPropagation()}>
+                <td>
                   <select
                     className="border border-gray-300 text-xs px-2 py-1 bg-white text-gray-700 outline-none"
                     value={o.status}
                     onChange={e => handleStatus(o._id, e.target.value)}>
                     {STATUSES.map(s => <option key={s}>{s}</option>)}
                   </select>
+                </td>
+                <td>
+                  <button onClick={() => setSelected(o)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#0a0a0a] border border-gray-200 px-3 py-1.5 hover:bg-[#0a0a0a] hover:text-white hover:border-[#0a0a0a] transition-colors whitespace-nowrap">
+                    <Eye size={12} /> View Details
+                  </button>
                 </td>
               </tr>
             ))}
@@ -73,7 +79,7 @@ export default function AdminOrdersPage() {
         )}
       </div>
 
-      {/* Order detail modal */}
+      {/* Order detail drawer */}
       <AnimatePresence>
         {selected && (
           <>
@@ -81,12 +87,16 @@ export default function AdminOrdersPage() {
               onClick={() => setSelected(null)}
               className="fixed inset-0 bg-black/40 z-50" />
             <motion.div key="drawer"
-              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-              transition={{ type: 'tween', duration: 0.25 }}
-              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-50 overflow-y-auto shadow-2xl">
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'tween', duration: 0.3 }}
+              className="fixed inset-x-0 bottom-0 z-50 bg-white shadow-2xl flex flex-col md:inset-y-0 md:inset-x-auto md:right-0 md:w-full md:max-w-lg"
+              style={{ height: '70%', borderRadius: '16px 16px 0 0' }}>
+              <div className="flex justify-center pt-3 pb-1 md:hidden shrink-0">
+                <div className="w-10 h-1 bg-gray-200 rounded-full" />
+              </div>
 
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white z-10 shrink-0">
                 <div>
                   <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400">Order Details</p>
                   <p className="font-black text-sm text-[#0a0a0a]">#{selected._id.slice(-8).toUpperCase()}</p>
@@ -96,11 +106,13 @@ export default function AdminOrdersPage() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="flex-1 overflow-y-auto p-6 space-y-5">
 
-                {/* Status */}
-                <div>
-                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-2">Status</p>
+                {/* Status + Update */}
+                <div className="border border-gray-100 p-4">
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-3 flex items-center gap-2">
+                    <Package size={12} /> Order Status
+                  </p>
                   <div className="flex items-center gap-3">
                     <span className={statusColor(selected.status)}>{selected.status}</span>
                     <select
@@ -110,11 +122,16 @@ export default function AdminOrdersPage() {
                       {STATUSES.map(s => <option key={s}>{s}</option>)}
                     </select>
                   </div>
+                  <p className="text-[10px] text-gray-400 mt-2">
+                    Placed on {new Date(selected.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
                 </div>
 
-                {/* Customer */}
+                {/* Customer info */}
                 <div className="border border-gray-100 p-4">
-                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-3">Customer</p>
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-3 flex items-center gap-2">
+                    <User size={12} /> Customer
+                  </p>
                   <p className="text-sm font-bold text-[#0a0a0a]">{selected.user?.name}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{selected.user?.email}</p>
                   {selected.shippingAddress?.phone && (
@@ -124,24 +141,30 @@ export default function AdminOrdersPage() {
 
                 {/* Shipping address */}
                 <div className="border border-gray-100 p-4">
-                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-3">Shipping Address</p>
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-3 flex items-center gap-2">
+                    <MapPin size={12} /> Delivery Address
+                  </p>
                   <p className="text-sm font-bold text-[#0a0a0a]">{selected.shippingAddress?.fullName}</p>
-                  <p className="text-sm text-gray-500 mt-0.5">{selected.shippingAddress?.phone}</p>
-                  <p className="text-sm text-gray-500">{selected.shippingAddress?.address}</p>
-                  <p className="text-sm text-gray-500">{selected.shippingAddress?.city} — {selected.shippingAddress?.pin}, {selected.shippingAddress?.country}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{selected.shippingAddress?.phone}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{selected.shippingAddress?.address}</p>
+                  <p className="text-xs text-gray-500">{selected.shippingAddress?.city} — {selected.shippingAddress?.pin}, {selected.shippingAddress?.country}</p>
                 </div>
 
                 {/* Items */}
                 <div>
-                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-3">Items ({selected.items?.length})</p>
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-3 flex items-center gap-2">
+                    <Tag size={12} /> Order Items ({selected.items?.length})
+                  </p>
                   <div className="divide-y divide-gray-100 border border-gray-100">
                     {selected.items?.map((item, i) => (
                       <div key={i} className="flex items-center gap-3 p-3">
-                        <img src={item.image || 'https://placehold.co/48x48?text=...'} alt={item.name}
-                          className="w-12 h-12 object-cover border border-gray-100 shrink-0" />
+                        <img src={item.image || 'https://placehold.co/48x48?text=...'}
+                          alt={item.name} className="w-12 h-12 object-cover border border-gray-100 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-[#0a0a0a] truncate">{item.name}</p>
-                          <p className="text-xs text-gray-400">Qty: {item.quantity} × ₹{item.price?.toLocaleString()}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            Qty: {item.quantity} × ₹{item.price?.toLocaleString()}
+                          </p>
                         </div>
                         <p className="text-sm font-black text-[#0a0a0a] shrink-0">
                           ₹{(item.price * item.quantity)?.toLocaleString()}
@@ -151,29 +174,68 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
 
-                {/* Pricing */}
+                {/* Payment + Price breakdown */}
                 <div className="border border-gray-100 p-4 space-y-2">
-                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-3">Price Breakdown</p>
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-3 flex items-center gap-2">
+                    <CreditCard size={12} /> Payment & Summary
+                  </p>
                   <div className="flex justify-between text-sm text-gray-500">
-                    <span>Items</span><span>₹{selected.itemsPrice?.toLocaleString()}</span>
+                    <span>Payment Method</span>
+                    <span className="font-semibold text-[#0a0a0a]">{selected.paymentMethod}</span>
                   </div>
+                  <div className="border-t border-dashed border-gray-100 my-2" />
+                  {selected.originalItemsPrice > selected.itemsPrice && (
+                    <div className="flex justify-between text-sm text-gray-400">
+                      <span>MRP Total</span>
+                      <span className="line-through">₹{selected.originalItemsPrice?.toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm text-gray-500">
-                    <span>Shipping</span>
+                    <span>Items Total</span>
+                    <span>₹{selected.itemsPrice?.toLocaleString()}</span>
+                  </div>
+                  {selected.originalItemsPrice > selected.itemsPrice && (
+                    <div className="flex justify-between text-sm text-green-600 font-semibold">
+                      <span>Offer Discount</span>
+                      <span>- ₹{(selected.originalItemsPrice - selected.itemsPrice).toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>Delivery</span>
                     <span className={selected.shippingPrice === 0 ? 'text-green-600 font-semibold' : ''}>
                       {selected.shippingPrice === 0 ? 'FREE' : `₹${selected.shippingPrice}`}
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm font-black text-[#0a0a0a] border-t border-gray-200 pt-2 mt-2">
-                    <span>Total</span><span>₹{selected.totalPrice?.toLocaleString()}</span>
+                  {selected.discount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600 font-semibold">
+                      <span>Coupon {selected.couponCode ? `(${selected.couponCode})` : ''}</span>
+                      <span>- ₹{selected.discount?.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm font-black text-[#0a0a0a] border-t border-gray-200 pt-2 mt-1">
+                    <span>Grand Total</span>
+                    <span>₹{selected.totalPrice?.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-400 pt-1">
-                    <span>Payment</span><span className="font-semibold">{selected.paymentMethod}</span>
-                  </div>
+                  {(() => {
+                    // Derive offer discount from items if originalItemsPrice not stored (old orders)
+                    const itemsOffer = selected.items?.reduce((s, item) => {
+                      const mrp = item.originalPrice || item.price;
+                      return s + (mrp - item.price) * item.quantity;
+                    }, 0) || 0;
+                    const offerSave = selected.originalItemsPrice > selected.itemsPrice
+                      ? selected.originalItemsPrice - selected.itemsPrice
+                      : itemsOffer;
+                    const deliverySave = selected.shippingPrice === 0 ? 99 : 0;
+                    const couponSave = selected.discount || 0;
+                    const totalSave = offerSave + deliverySave + couponSave;
+                    return totalSave > 0 ? (
+                      <p className="text-[11px] text-green-600 font-semibold bg-green-50 px-3 py-2 mt-1">
+                        🎉 Customer saved ₹{totalSave.toLocaleString()} on this order
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
 
-                <p className="text-[10px] text-gray-400 text-center">
-                  Placed on {new Date(selected.createdAt).toLocaleString('en-IN')}
-                </p>
               </div>
             </motion.div>
           </>

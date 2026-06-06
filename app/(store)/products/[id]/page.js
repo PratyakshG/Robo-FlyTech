@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { getProduct, getProducts, getProductsWithOffers } from '@/lib/api';
+import { useParams, useRouter } from 'next/navigation';
+import { getProduct, getProducts, getProductsWithOffers, getProductWithOffer } from '@/lib/api';
 import { useCart } from '@/context/CartContext';
 import Navbar from '@/components/store/Navbar';
 import Footer from '@/components/store/Footer';
@@ -14,25 +14,27 @@ const TABS = ['Specifications', 'Details', 'Reviews'];
 
 export default function ProductDetailPage() {
   const { id } = useParams();
+  const router = useRouter();
   const [product, setProduct]       = useState(null);
   const [related, setRelated]       = useState([]);
   const [activeTab, setActiveTab]   = useState(0);
   const [activeImg, setActiveImg]   = useState(0);
-  const { addToCart, updateQty, removeFromCart, cartItems } = useCart();
+  const { addToCart, updateQty, removeFromCart, cartItems, buyNow } = useCart();
 
   useEffect(() => {
-    getProductsWithOffers({ limit: 0 }).then(offersRes => {
-      const offerMap = {};
-      (offersRes.data || []).forEach(p => { offerMap[p._id] = p; });
-      getProduct(id).then(r => {
-        const prod = offerMap[r.data._id] || r.data;
-        setProduct(prod);
-        setActiveImg(0);
+    // Fetch product with offer applied in one reliable call
+    getProductWithOffer(id).then(r => {
+      setProduct(r.data);
+      setActiveImg(0);
+      // Fetch related with offers applied
+      getProductsWithOffers({ limit: 0 }).then(offersRes => {
+        const offerMap = {};
+        (offersRes.data || []).forEach(p => { offerMap[String(p._id)] = p; });
         getProducts({ category: r.data.category, limit: 5 }).then(res => {
           const prods = (res.data.products || [])
-            .filter(p => p._id !== id)
+            .filter(p => String(p._id) !== String(id))
             .slice(0, 4)
-            .map(p => offerMap[p._id] || p);
+            .map(p => offerMap[String(p._id)] || p);
           setRelated(prods);
         });
       });
@@ -53,14 +55,20 @@ export default function ProductDetailPage() {
     </>
   );
 
-  const hasOffer      = product.offerPrice && product.offerPrice < product.price;
-  const displayPrice  = hasOffer ? product.offerPrice : product.price;
-  const originalPrice = hasOffer ? product.price : null;
-  const discountPct   = hasOffer ? Math.round((1 - product.offerPrice / product.price) * 100) : null;
+  const hasOffer     = product.offerPrice && product.offerPrice < product.price;
+  const displayPrice = hasOffer ? product.offerPrice : product.price;
+  // MRP: if offer active use base price, else use originalPrice (deal badge), else null
+  const mrpPrice     = hasOffer
+    ? (product.originalPrice || product.price)
+    : (product.originalPrice && product.originalPrice > product.price ? product.originalPrice : null);
+  const discountPct  = mrpPrice
+    ? Math.round((1 - displayPrice / mrpPrice) * 100)
+    : null;
+  const savedAmount  = mrpPrice ? mrpPrice - displayPrice : 0;
 
   // Build specs from product.specifications array
-  const specs = (product.specifications && product.specifications.length > 0)
-    ? product.specifications
+  const specs = Array.isArray(product.specifications)
+    ? product.specifications.filter(s => s.label && s.value)
     : [];
 
   // Images: use product.images array if available, else wrap single image
@@ -177,7 +185,7 @@ export default function ProductDetailPage() {
               </h1>
 
               {/* Rating row */}
-              {product.rating && (
+              {product.rating > 0 && (
                 <div className="flex items-center gap-2 mb-5">
                   <div className="flex">
                     {Array(5).fill(0).map((_, i) => (
@@ -186,26 +194,29 @@ export default function ProductDetailPage() {
                     ))}
                   </div>
                   <span className="text-xs font-bold text-[#0a0a0a]">{product.rating.toFixed(1)}</span>
-                  {product.numReviews && (
+                  {product.numReviews > 0 && (
                     <span className="text-xs text-gray-400">({product.numReviews} reviews)</span>
                   )}
                 </div>
               )}
 
               {/* Price */}
-              <div className="flex items-baseline gap-3 mb-6">
+              <div className="flex items-baseline gap-3 mb-2">
                 <span className="font-black text-[2.2rem] tracking-[-0.03em] text-[#0a0a0a]">
                   ₹{displayPrice.toLocaleString()}
                 </span>
-                {originalPrice && (
+                {mrpPrice && (
                   <span className="text-lg text-gray-400 line-through font-medium">
-                    ₹{originalPrice.toLocaleString()}
+                    ₹{mrpPrice.toLocaleString()}
                   </span>
                 )}
                 {discountPct && (
-                  <span className="text-sm font-bold text-[#dc2626]">Save {discountPct}%</span>
+                  <span className="text-sm font-bold text-[#dc2626]">{discountPct}% OFF</span>
                 )}
               </div>
+              {savedAmount > 0 && (
+                <p className="text-sm font-bold text-green-600 mb-6">You Save ₹{savedAmount.toLocaleString()}</p>
+              )}
 
               {/* Description */}
               {product.description && (
@@ -263,25 +274,34 @@ export default function ProductDetailPage() {
 
               {/* Buy Now */}
               {product.stock > 0 && (
-                <Link href="/checkout"
-                  onClick={() => { if (!cartItems.find(i => i._id === product._id)) addToCart(product); }}
-                  className="h-12 border border-[#0a0a0a] flex items-center justify-center text-xs font-bold tracking-widest uppercase text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white transition-colors mb-6">
+                <button
+                  onClick={() => { buyNow(product); router.push('/checkout'); }}
+                  className="h-12 border border-[#0a0a0a] flex items-center justify-center text-xs font-bold tracking-widest uppercase text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white transition-colors mb-6 w-full">
                   Buy Now
-                </Link>
+                </button>
               )}
 
               {/* Perks */}
-              <div className="grid grid-cols-2 border border-gray-100 divide-x divide-gray-100 mb-6">
-                {[
-                  { Icon: Truck,       title: 'Free shipping', sub: 'Over ₹999' },
-                  { Icon: ShieldCheck, title: '1-yr warranty', sub: 'Manufacturer' },
-                ].map(({ Icon, title, sub }) => (
-                  <div key={title} className="flex flex-col items-center gap-1.5 py-4 px-2 text-center">
-                    <Icon size={16} className="text-gray-400" />
-                    <p className="text-[11px] font-bold text-[#0a0a0a]">{title}</p>
-                    <p className="text-[10px] text-gray-400">{sub}</p>
+              <div className={`grid grid-cols-${[true, product.warrantyEnabled, product.returnsEnabled].filter(Boolean).length > 2 ? 3 : 2} border border-gray-100 divide-x divide-gray-100 mb-6`}>
+                <div className="flex flex-col items-center gap-1.5 py-4 px-2 text-center">
+                  <Truck size={16} className="text-gray-400" />
+                  <p className="text-[11px] font-bold text-[#0a0a0a]">{product.freeShipping ? 'Free Shipping' : 'Fast Shipping'}</p>
+                  <p className="text-[10px] text-gray-400">{product.freeShipping ? 'No extra charges' : 'Quick delivery'}</p>
+                </div>
+                {product.warrantyEnabled && (
+                  <div className="flex flex-col items-center gap-1.5 py-4 px-2 text-center">
+                    <ShieldCheck size={16} className="text-gray-400" />
+                    <p className="text-[11px] font-bold text-[#0a0a0a]">Warranty</p>
+                    <p className="text-[10px] text-gray-400">{product.warrantyDuration} {product.warrantyUnit}</p>
                   </div>
-                ))}
+                )}
+                {product.returnsEnabled && (
+                  <div className="flex flex-col items-center gap-1.5 py-4 px-2 text-center">
+                    <RotateCcw size={16} className="text-gray-400" />
+                    <p className="text-[11px] font-bold text-[#0a0a0a]">Easy Returns</p>
+                    <p className="text-[10px] text-gray-400">{product.returnDays || 7} days return</p>
+                  </div>
+                )}
               </div>
 
               {/* Stock indicator */}

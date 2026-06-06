@@ -18,7 +18,7 @@ export default function Navbar() {
   const [searchVal, setSearchVal] = useState('');
   const [catOpen, setCatOpen] = useState(false);
   const [categories, setCategories] = useState([]);
-  const [tickerItems, setTickerItems] = useState(['🚚 FREE EXPRESS SHIPPING OVER ₹999']);
+  const [tickerItems, setTickerItems] = useState(['🚚 FAST SHIPPING ON ALL ORDERS']);
   const catCloseTimer = useRef(null);
 
   const openCat  = () => { clearTimeout(catCloseTimer.current); setCatOpen(true); };
@@ -28,7 +28,7 @@ export default function Navbar() {
     getCategories().then(r => setCategories(r.data || [])).catch(() => {});
     getActiveOffers().then(r => {
       const offers = r.data || [];
-      const items = ['🚚 FREE EXPRESS SHIPPING OVER ₹999'];
+      const items = ['🚚 FAST SHIPPING ON ALL ORDERS'];
       offers.forEach(o => {
         const val = o.type === 'percentage' ? `${o.value}% OFF` : `₹${o.value} OFF`;
         items.unshift(`⚡ ${o.name?.toUpperCase() || 'FLASH SALE'} — UP TO ${val}`);

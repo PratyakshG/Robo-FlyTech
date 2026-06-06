@@ -174,7 +174,7 @@ export default function RegisterPage() {
           transition={{ delay: 0.7 }}
           className="relative z-10 space-y-3">
           {[
-            ['✦', 'Free shipping on orders over ₹999'],
+            ['✦', 'Fast shipping on all orders'],
             ['✦', 'Exclusive member-only offers'],
             ['✦', 'Track orders in real time'],
           ].map(([icon, text]) => (
