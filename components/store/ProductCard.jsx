@@ -36,13 +36,10 @@ export default function ProductCard({ product, index }) {
           alt={product.name}
           className="w-full h-40 object-cover group-hover:scale-[1.03] transition-transform duration-500"
         />
-        {/* Top-left badge */}
+        {/* Top-left badge — only New and discount % */}
         <div className="absolute top-2 left-2 flex gap-1">
           {isNew && <span className="badge-new">New</span>}
-          {product.offerBadge && <span className="badge-deal">{product.offerBadge}</span>}
-          {!product.offerBadge && isDeal && <span className="badge-deal">Deal</span>}
           {discountPct && <span className="badge-deal">-{discountPct}%</span>}
-          {product.stock === 0 && <span className="badge-red">Sold Out</span>}
         </div>
         {/* Top-right index */}
         {index != null && (
@@ -89,7 +86,7 @@ export default function ProductCard({ product, index }) {
                 initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.15 }}
                 className="flex items-center justify-between gap-1">
-                <div className="flex items-baseline gap-1 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                   <span className="text-sm font-bold text-[#0a0a0a] truncate">₹{displayPrice.toLocaleString()}</span>
                   {displayOriginal && (
                     <span className="text-[10px] text-gray-400 line-through shrink-0">₹{displayOriginal.toLocaleString()}</span>
@@ -112,18 +109,22 @@ export default function ProductCard({ product, index }) {
                 initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.15 }}
                 className="flex items-center justify-between gap-2">
-                <div className="flex items-baseline gap-1 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                   <span className="text-sm font-bold text-[#0a0a0a] truncate">₹{displayPrice.toLocaleString()}</span>
                   {displayOriginal && (
                     <span className="text-[10px] text-gray-400 line-through shrink-0">₹{displayOriginal.toLocaleString()}</span>
                   )}
+                  {product.stock === 0 && (
+                    <span className="text-[10px] font-bold text-[#dc2626] shrink-0">Out of stock</span>
+                  )}
                 </div>
-                <button
-                  onClick={handleAdd}
-                  disabled={product.stock === 0}
-                  className="w-7 h-7 bg-[#0a0a0a] text-white flex items-center justify-center hover:bg-[#dc2626] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0">
-                  <Plus size={13} />
-                </button>
+                {product.stock > 0 && (
+                  <button
+                    onClick={handleAdd}
+                    className="w-7 h-7 bg-[#0a0a0a] text-white flex items-center justify-center hover:bg-[#dc2626] transition-colors shrink-0">
+                    <Plus size={13} />
+                  </button>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

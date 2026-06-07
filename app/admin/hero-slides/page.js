@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, Pencil, Trash2, X, Save, ImageIcon, GripVertical, Eye, EyeOff, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
-const EMPTY_EDIT = { image: '', label: '', tag: '', active: true, order: 0 };
+const EMPTY_EDIT = { image: '', label: '', tag: '', heading: '', subtext: '', buttonText: '', buttonLink: '/products', active: true, order: 0 };
 
 export default function AdminHeroSlidesPage() {
   const [slides, setSlides]       = useState([]);
@@ -251,25 +251,51 @@ export default function AdminHeroSlidesPage() {
             <motion.div key="edit-modal" initial={{ opacity: 0, scale: 0.96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 20 }} transition={{ duration: 0.2 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-              <div className="bg-white border border-gray-200 w-full max-w-md pointer-events-auto shadow-2xl">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div className="bg-white border border-gray-200 w-full max-w-md pointer-events-auto shadow-2xl max-h-[90vh] flex flex-col">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
                   <h2 className="font-black text-lg tracking-tight">Edit Slide</h2>
                   <button onClick={() => setEditModal(null)} className="p-1.5 text-gray-400 hover:text-gray-700"><X size={18} /></button>
                 </div>
-                <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleEditSubmit} className="p-6 space-y-4 overflow-y-auto">
                   {/* Preview */}
                   <img src={editModal.image} alt="" className="w-full h-36 object-cover border border-gray-200" />
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Label</label>
-                      <input className="input-field" placeholder="e.g. FEATURED / AUDIO"
+                      <input className="input-field" placeholder="e.g. FEATURED"
                         value={form.label} onChange={e => set('label', e.target.value)} />
                     </div>
                     <div>
                       <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Tag</label>
                       <input className="input-field" placeholder="e.g. BEST SELLER"
                         value={form.tag} onChange={e => set('tag', e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Heading</label>
+                    <input className="input-field" placeholder="e.g. Built for the Signal."
+                      value={form.heading} onChange={e => set('heading', e.target.value)} />
+                    <p className="text-[10px] text-gray-400 mt-1">Use | to split into lines — e.g. Built for|the Signal.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Subtext</label>
+                    <textarea className="input-field resize-none" rows={2} placeholder="Short description shown below heading"
+                      value={form.subtext} onChange={e => set('subtext', e.target.value)} />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Button Text</label>
+                      <input className="input-field" placeholder="e.g. Shop Now"
+                        value={form.buttonText} onChange={e => set('buttonText', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Button Link</label>
+                      <input className="input-field" placeholder="/products"
+                        value={form.buttonLink} onChange={e => set('buttonLink', e.target.value)} />
                     </div>
                   </div>
 

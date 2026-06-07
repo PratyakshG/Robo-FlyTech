@@ -140,7 +140,7 @@ export default function ProfilePage() {
                 </h1>
                 <p className="text-xs text-gray-400 mt-1">{profile.email} · Since {new Date(profile.createdAt).getFullYear()}</p>
               </div>
-              <button onClick={() => { logout(); router.push('/'); }}
+              <button onClick={() => logout()}
                 className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-[#dc2626] transition-colors">
                 <LogOut size={14} /> <span className="hidden sm:inline">Sign out</span>
               </button>

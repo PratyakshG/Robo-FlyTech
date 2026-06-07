@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { registerUser } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
@@ -11,8 +11,17 @@ export default function RegisterPage() {
   const [form, setForm]   = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user, mounted } = useAuth();
   const router    = useRouter();
+
+  // Redirect already-logged-in users away from register page
+  useEffect(() => {
+    if (!mounted) return;
+    if (user?.role === 'admin') router.replace('/admin');
+    else if (user) router.replace('/');
+  }, [mounted, user]);
+
+  if (!mounted || user) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

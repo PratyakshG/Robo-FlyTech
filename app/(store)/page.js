@@ -4,7 +4,7 @@ import { getProductsWithOffers, getActiveOffers, getCategories, getHeroSlides } 
 import ProductCard from '@/components/store/ProductCard';
 import Navbar from '@/components/store/Navbar';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Zap, Truck, ShieldCheck, RotateCcw, Headphones } from 'lucide-react';
 import Footer from '@/components/store/Footer';
 
@@ -64,7 +64,7 @@ export default function HomePage() {
             {heroSlides.map((slide, i) => (
               <motion.div key={i} initial={false}
                 animate={{ opacity: heroIndex === i ? 1 : 0 }}
-                transition={{ duration: 0.8, ease: 'easeInOut' }}
+                transition={{ duration: 1.4, ease: 'easeInOut' }}
                 className="absolute inset-0">
                 <img src={slide.image} alt={slide.label} className="w-full h-full object-cover" />
               </motion.div>
@@ -72,32 +72,47 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
             <div className="relative z-10 flex flex-col justify-between h-full px-5 py-8">
               <div className="flex items-center justify-between">
-                <span className="bg-[#dc2626] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">{heroSlides[heroIndex]?.label}</span>
-                <span className="bg-white/10 backdrop-blur-sm text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">{heroSlides[heroIndex]?.tag}</span>
+                {heroSlides[heroIndex]?.label && <span className="bg-[#dc2626] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">{heroSlides[heroIndex].label}</span>}
+                {heroSlides[heroIndex]?.tag && <span className="bg-white/10 backdrop-blur-sm text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5">{heroSlides[heroIndex].tag}</span>}
               </div>
-              <div>
-                <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                  className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/60 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-[#dc2626] inline-block" />
-                  VOL.04 / FEB 2026 / <span className="text-[#dc2626]">NEW SEASON</span>
-                </motion.p>
-                <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                  className="font-black text-[3.2rem] leading-[0.9] tracking-[-0.04em] text-white mb-5">
-                  Built for<br />the <span className="text-[#dc2626] italic">signal.</span>
-                </motion.h1>
-                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-                  className="text-white/70 text-sm mb-7 leading-relaxed max-w-xs">
-                  Premium electronics curated for those who demand performance.
-                </motion.p>
-                <div className="flex gap-3">
-                  <Link href="/products" className="flex items-center gap-2 bg-white text-[#0a0a0a] px-5 py-3 text-sm font-bold hover:bg-[#dc2626] hover:text-white transition-colors">
-                    Shop <ArrowRight size={14} />
-                  </Link>
-                  <Link href="/products?deals=true" className="flex items-center gap-2 border border-white/50 text-white px-5 py-3 text-sm font-semibold hover:bg-white/10 transition-colors">
-                    Deals <Zap size={13} />
-                  </Link>
-                </div>
+
+              <div className="mb-52">
+                <AnimatePresence mode="wait">
+                  <motion.div key={heroIndex}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}>
+                    <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.6 }}
+                      className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/60 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-[#dc2626] inline-block" />
+                      VOL.04 / FEB 2026 / <span className="text-[#dc2626]">NEW SEASON</span>
+                    </motion.p>
+                    <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.7 }}
+                      className="font-black text-[3.2rem] leading-[0.9] tracking-[-0.04em] text-white mb-5">
+                      {heroSlides[heroIndex]?.heading
+                        ? heroSlides[heroIndex].heading.split('|').map((line, i) => <span key={i}>{line}{i < heroSlides[heroIndex].heading.split('|').length - 1 && <br />}</span>)
+                        : <>Built for<br />the <span className="text-[#dc2626] italic">signal.</span></>}
+                    </motion.h1>
+                    {heroSlides[heroIndex]?.subtext && (
+                      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45, duration: 0.7 }}
+                        className="text-white/70 text-sm mb-7 leading-relaxed max-w-xs">
+                        {heroSlides[heroIndex].subtext}
+                      </motion.p>
+                    )}
+                    <div className="flex gap-3">
+                      <Link href={heroSlides[heroIndex]?.buttonLink || '/products'}
+                        className="flex items-center gap-2 bg-white text-[#0a0a0a] px-5 py-3 text-sm font-bold hover:bg-[#dc2626] hover:text-white transition-colors">
+                        {heroSlides[heroIndex]?.buttonText || 'Shop'} <ArrowRight size={14} />
+                      </Link>
+                      <Link href="/products?deals=true" className="flex items-center gap-2 border border-white/50 text-white px-5 py-3 text-sm font-semibold hover:bg-white/10 transition-colors">
+                        Deals <Zap size={13} />
+                      </Link>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
               </div>
+
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   {heroSlides.map((_, i) => (
@@ -116,34 +131,48 @@ export default function HomePage() {
           {/* DESKTOP HERO */}
           <div className="hidden md:grid md:grid-cols-2 max-w-[1400px] mx-auto min-h-[560px]">
             <div className="flex flex-col justify-center py-16 px-6 border-r border-gray-200">
-              <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className="text-[11px] font-semibold tracking-[0.2em] uppercase text-gray-500 mb-6 flex items-center gap-3">
-                <span className="w-2 h-2 bg-[#dc2626] inline-block" />
-                VOL.04 / FEB 2026 / <span className="text-[#dc2626]">NEW SEASON</span>
-              </motion.p>
-              <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                className="font-black text-[4rem] lg:text-[5.5rem] leading-[0.88] tracking-[-0.04em] text-[#0a0a0a] mb-8">
-                Built for<br />the <span className="text-[#dc2626] italic">signal.</span>
-              </motion.h1>
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-                className="text-gray-500 text-base mb-10 max-w-sm leading-relaxed">
-                Premium electronics curated for those who demand performance. No compromises.
-              </motion.p>
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-                className="flex gap-3 flex-wrap">
-                <Link href="/products" className="flex items-center gap-2 bg-[#0a0a0a] text-white px-7 py-3.5 text-sm font-semibold hover:bg-[#dc2626] transition-colors">
-                  Shop everything <ArrowRight size={15} />
-                </Link>
-                <Link href="/products?deals=true" className="flex items-center gap-2 border-[1.5px] border-[#0a0a0a] text-[#0a0a0a] px-7 py-3.5 text-sm font-semibold hover:bg-[#0a0a0a] hover:text-white transition-colors">
-                  Today's deals <Zap size={14} />
-                </Link>
-              </motion.div>
+              <AnimatePresence mode="wait">
+                <motion.div key={heroIndex}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex flex-col">
+                  <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6 }}
+                    className="text-[11px] font-semibold tracking-[0.2em] uppercase text-gray-500 mb-6 flex items-center gap-3">
+                    <span className="w-2 h-2 bg-[#dc2626] inline-block" />
+                    VOL.04 / FEB 2026 / <span className="text-[#dc2626]">NEW SEASON</span>
+                  </motion.p>
+                  <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.7 }}
+                    className="font-black text-[4rem] lg:text-[5.5rem] leading-[0.88] tracking-[-0.04em] text-[#0a0a0a] mb-8">
+                    {heroSlides[heroIndex]?.heading
+                      ? heroSlides[heroIndex].heading.split('|').map((line, i) => <span key={i}>{line}{i < heroSlides[heroIndex].heading.split('|').length - 1 && <br />}</span>)
+                      : <>Built for<br />the <span className="text-[#dc2626] italic">signal.</span></>}
+                  </motion.h1>
+                  {heroSlides[heroIndex]?.subtext && (
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.42, duration: 0.7 }}
+                      className="text-gray-500 text-base mb-10 max-w-sm leading-relaxed">
+                      {heroSlides[heroIndex].subtext}
+                    </motion.p>
+                  )}
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6 }}
+                    className="flex gap-3 flex-wrap">
+                    <Link href={heroSlides[heroIndex]?.buttonLink || '/products'}
+                      className="flex items-center gap-2 bg-[#0a0a0a] text-white px-7 py-3.5 text-sm font-semibold hover:bg-[#dc2626] transition-colors">
+                      {heroSlides[heroIndex]?.buttonText || 'Shop everything'} <ArrowRight size={15} />
+                    </Link>
+                    <Link href="/products?deals=true" className="flex items-center gap-2 border-[1.5px] border-[#0a0a0a] text-[#0a0a0a] px-7 py-3.5 text-sm font-semibold hover:bg-[#0a0a0a] hover:text-white transition-colors">
+                      Today's deals <Zap size={14} />
+                    </Link>
+                  </motion.div>
+                </motion.div>
+              </AnimatePresence>
             </div>
             <div className="relative overflow-hidden bg-gray-100">
               {heroSlides.map((slide, i) => (
                 <motion.div key={i} initial={false}
                   animate={{ opacity: heroIndex === i ? 1 : 0 }}
-                  transition={{ duration: 0.8, ease: 'easeInOut' }}
+                  transition={{ duration: 1.4, ease: 'easeInOut' }}
                   className="absolute inset-0">
                   <img src={slide.image} alt={slide.label} className="w-full h-full object-cover" />
                 </motion.div>

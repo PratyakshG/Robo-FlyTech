@@ -6,16 +6,29 @@ import Sidebar from '@/components/admin/Sidebar';
 import { Menu, X } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
-  const { user } = useAuth();
+  const { user, mounted } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    if (!mounted) return;
     if (!user) router.replace('/login');
     else if (user.role !== 'admin') router.replace('/');
-  }, [user]);
+  }, [mounted, user]);
 
-  if (!user || user.role !== 'admin') return null;
+  // Block back navigation out of admin — replace current entry so back has nowhere to go
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // Push a duplicate entry so back button stays within admin
+    window.history.pushState(null, '', window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  if (!mounted || !user || user.role !== 'admin') return null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
