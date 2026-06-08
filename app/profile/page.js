@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/Toast';
 import { getProfile, updateProfile, changePassword, getMyOrders, getAddresses, addAddress, deleteAddress, getOrderById } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MapPin, Lock, ShoppingBag, Save, Eye, EyeOff, Package, LogOut, Settings, Heart, X, ChevronRight, Truck, CreditCard, Tag, PartyPopper } from 'lucide-react';
+import { User, MapPin, Lock, ShoppingBag, Save, Eye, EyeOff, Package, LogOut, Settings, Heart, X, ChevronRight, Truck, CreditCard, Tag, PartyPopper, Smartphone } from 'lucide-react';
 import OrderStatusBar from '@/components/OrderStatusBar';
 
 const TABS = [
@@ -67,7 +67,10 @@ export default function ProfilePage() {
       setProfileForm({ name: r.data.name || '', email: r.data.email || '', phone: r.data.phone || '' });
     });
     getAddresses().then(r => setAddresses(r.data || [])).catch(() => {});
-    getMyOrders().then(r => setOrders(r.data));
+    getMyOrders().then(r => {
+      const sortedOrders = (r.data || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setOrders(sortedOrders);
+    });
   }, [mounted, user]);
 
   const handleProfileSave = async (e) => {

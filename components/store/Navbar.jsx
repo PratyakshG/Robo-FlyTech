@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Search, User, ShoppingBag, Menu, X, LogOut, ChevronDown } from 'lucide-react';
-import { getCategories, getActiveOffers } from '@/lib/api';
+import { getCategories, getActiveOffers, searchProducts } from '@/lib/api';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -16,6 +16,8 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [tickerItems, setTickerItems] = useState(['🚚 FAST SHIPPING ON ALL ORDERS']);
@@ -38,6 +40,24 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => { logout(); router.push('/'); };
+
+  useEffect(() => {
+    if (!searchVal.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setSearchLoading(true);
+      searchProducts(searchVal)
+        .then(r => {
+          const products = r.data?.products || r.data || [];
+          setSearchResults(products.slice(0, 5));
+        })
+        .catch(() => setSearchResults([]))
+        .finally(() => setSearchLoading(false));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchVal]);
 
   return (
     <header className="sticky top-0 z-50 bg-white">
@@ -202,19 +222,59 @@ export default function Navbar() {
           {searchOpen && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
-              className="border-t border-gray-100 overflow-hidden">
-              <div className="max-w-[1400px] mx-auto px-6 py-3">
-                <form onSubmit={e => { e.preventDefault(); router.push(`/products?search=${searchVal}`); setSearchOpen(false); }}
+              className="border-t border-gray-100 bg-white relative z-50">
+              <div className="max-w-[1400px] mx-auto px-6 py-3 relative">
+                <form onSubmit={e => { e.preventDefault(); if(searchVal.trim()) { router.push(`/products?search=${searchVal}`); setSearchOpen(false); setSearchVal(''); } }}
                   className="flex items-center gap-3">
                   <Search size={16} className="text-gray-400 shrink-0" />
                   <input autoFocus value={searchVal} onChange={e => setSearchVal(e.target.value)}
                     placeholder="Search products, brands..."
                     className="flex-1 text-sm bg-transparent border-none outline-none placeholder:text-gray-400" />
                   <button type="submit" className="text-xs font-semibold text-[#dc2626] tracking-wider uppercase">Search</button>
-                  <button type="button" onClick={() => setSearchOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <button type="button" onClick={() => { setSearchOpen(false); setSearchVal(''); setSearchResults([]); }} className="text-gray-400 hover:text-gray-600">
                     <X size={16} />
                   </button>
                 </form>
+
+                {/* Search Results Dropdown */}
+                {searchVal.trim() && (
+                  <div className="absolute left-6 right-6 top-full mt-0 border border-gray-200 bg-white shadow-xl max-h-[400px] overflow-y-auto z-[60]">
+                    {searchLoading ? (
+                      <div className="p-4 text-center text-sm text-gray-400">Searching...</div>
+                    ) : searchResults.length > 0 ? (
+                      <>
+                        {searchResults.map(product => (
+                          <Link key={product._id}
+                            href={`/products/${product._id}`}
+                            onClick={() => { setSearchOpen(false); setSearchVal(''); setSearchResults([]); }}
+                            className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors">
+                            <img src={product.image || 'https://placehold.co/48x48?text=...'}
+                              alt={product.name}
+                              className="w-12 h-12 object-cover border border-gray-100 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-[#0a0a0a] truncate">{product.name}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <p className="text-xs font-bold text-[#dc2626]">₹{(product.offerPrice || product.price)?.toLocaleString()}</p>
+                                {product.offerPrice && product.price > product.offerPrice && (
+                                  <p className="text-xs text-gray-400 line-through">₹{product.price?.toLocaleString()}</p>
+                                )}
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                        {searchResults.length >= 5 && (
+                          <button
+                            onClick={() => { router.push(`/products?search=${searchVal}`); setSearchOpen(false); setSearchVal(''); setSearchResults([]); }}
+                            className="w-full p-3 text-xs font-bold tracking-widest uppercase text-[#dc2626] hover:bg-red-50 transition-colors border-t border-gray-200">
+                            View All Results →
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <div className="p-4 text-center text-sm text-gray-400">No products found</div>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
