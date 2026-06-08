@@ -15,7 +15,7 @@ const STEPS = ['Address', 'Payment', 'Review', 'Confirm'];
 
 const PAYMENT_METHODS = [
   { id: 'COD', label: 'Cash on Delivery', sub: 'Pay when your order arrives', icon: <Banknote size={18} /> },
-  { id: 'UPI', label: 'UPI', sub: 'GPay, PhonePe, Paytm & more', icon: <Smartphone size={18} /> },
+  { id: 'UPI', label: 'UPI', sub: 'Admin will contact you via WhatsApp', icon: <Smartphone size={18} /> },
 ];
 
 // Sample coupons — replace with API call if needed
@@ -150,6 +150,7 @@ export default function CheckoutPage() {
       });
       clearCart();
       clearBuyNow();
+      if (typeof window !== 'undefined') sessionStorage.setItem('lastOrderPaymentMethod', paymentMethod);
       setOrderPlaced(true);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to place order. Please try again.');
@@ -345,17 +346,6 @@ export default function CheckoutPage() {
                         </label>
                       </StaggerItem>
                     ))}
-                    {paymentMethod === 'UPI' && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="border border-dashed border-gray-300 p-4 bg-gray-50">
-                        <p className="text-xs font-bold text-[#0a0a0a] mb-2">Enter UPI ID</p>
-                        <input type="text" placeholder="yourname@upi" className="border border-gray-200 px-3 py-2 text-sm w-full outline-none focus:border-[#0a0a0a]" />
-                        <p className="text-[10px] text-gray-400 mt-1">You will receive a payment request on your UPI app</p>
-                      </motion.div>
-                    )}
                     <button onClick={() => setStep(2)}
                       className="w-full bg-[#0a0a0a] text-white text-xs font-bold tracking-widest uppercase py-4 hover:bg-[#dc2626] transition-colors mt-2">
                       Continue to Review →
@@ -587,9 +577,15 @@ export default function CheckoutPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="text-center">
-                <p className="text-white font-black text-2xl tracking-tight">Order Placed!</p>
-                <p className="text-gray-400 text-sm mt-1">Taking you to your order summary...</p>
+                className="text-center max-w-md">
+                <p className="text-white font-black text-2xl tracking-tight">Order Placed Successfully!</p>
+                {paymentMethod === 'UPI' ? (
+                  <p className="text-gray-300 text-sm mt-2 leading-relaxed">
+                    Our team will contact you on WhatsApp within 24 hours for the next payment process.
+                  </p>
+                ) : (
+                  <p className="text-gray-400 text-sm mt-1">Taking you to your order summary...</p>
+                )}
               </motion.div>
             </motion.div>
           </motion.div>

@@ -445,6 +445,19 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
+                  {/* UPI Payment Notice - Only show for Pending/Processing orders */}
+                  {selectedOrder.paymentMethod === 'UPI' && (selectedOrder.status === 'Pending' || selectedOrder.status === 'Processing') && (
+                    <div className="border border-blue-200 bg-blue-50 p-4">
+                      <div className="flex items-center gap-2 text-xs font-bold text-[#0a0a0a] mb-2">
+                        <Smartphone size={14} className="text-blue-600" />
+                        <span>Payment via UPI</span>
+                      </div>
+                      <p className="text-xs text-gray-600 leading-relaxed">
+                        Our team will contact you on WhatsApp within 24 hours for the payment process.
+                      </p>
+                    </div>
+                  )}
+
                   {/* Delivery Address */}
                   <div className="border border-gray-100 p-4">
                     <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-2 flex items-center gap-1.5">

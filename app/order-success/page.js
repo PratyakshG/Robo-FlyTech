@@ -1,10 +1,21 @@
 'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingBag, Package, CheckCheck } from 'lucide-react';
+import { ShoppingBag, Package, CheckCheck, Smartphone } from 'lucide-react';
 import Navbar from '@/components/store/Navbar';
 import Footer from '@/components/store/Footer';
 
 export default function OrderSuccessPage() {
+  const router = useRouter();
+  const paymentMethod = typeof window !== 'undefined' ? sessionStorage.getItem('lastOrderPaymentMethod') : null;
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined') sessionStorage.removeItem('lastOrderPaymentMethod');
+    };
+  }, []);
+
   return (
     <>
       <Navbar />
@@ -19,9 +30,21 @@ export default function OrderSuccessPage() {
           <h1 className="font-black text-[2.5rem] tracking-[-0.04em] leading-none text-[#0a0a0a] mb-4">
             Order placed<br />successfully!
           </h1>
-          <p className="text-sm text-gray-500 leading-relaxed mb-8">
-            Thank you for your purchase. We'll process and ship your order shortly. You'll receive a confirmation soon.
-          </p>
+          {paymentMethod === 'UPI' ? (
+            <div className="text-sm text-gray-600 leading-relaxed mb-8 bg-blue-50 border border-blue-200 p-4 rounded">
+              <div className="flex items-center gap-2 font-bold text-[#0a0a0a] mb-2">
+                <Smartphone size={16} className="text-blue-600" />
+                <span>Payment via UPI</span>
+              </div>
+              <p className="text-sm">
+                Our team will contact you on WhatsApp within 24 hours for the payment process. Please keep your phone accessible.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 leading-relaxed mb-8">
+              Thank you for your purchase. We'll process and ship your order shortly. You'll receive a confirmation soon.
+            </p>
+          )}
 
           {/* Divider */}
           <div className="border-t border-gray-200 mb-8" />
