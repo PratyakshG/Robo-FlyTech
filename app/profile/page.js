@@ -8,6 +8,7 @@ import { useToast } from '@/components/Toast';
 import { getProfile, updateProfile, changePassword, getMyOrders, getAddresses, addAddress, deleteAddress, getOrderById } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, MapPin, Lock, ShoppingBag, Save, Eye, EyeOff, Package, LogOut, Settings, Heart, X, ChevronRight, Truck, CreditCard, Tag, PartyPopper } from 'lucide-react';
+import OrderStatusBar from '@/components/OrderStatusBar';
 
 const TABS = [
   { id: 'orders',   label: 'Orders',    icon: ShoppingBag },
@@ -225,7 +226,12 @@ export default function ProfilePage() {
                                 {order.status}
                               </span>
                             </div>
-                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                            {/* Compact status bar on order card */}
+                            <div className="mt-3 px-1">
+                              <OrderStatusBar status={order.status} compact={true} />
+                            </div>
+
+                            <div className="flex items-center justify-between mt-2 pt-3 border-t border-gray-100">
                               <p className="text-xs text-gray-500">{order.items?.length} item{order.items?.length !== 1 ? 's' : ''} · {order.paymentMethod}</p>
                               <div className="flex items-center gap-3">
                                 <p className="text-sm font-black text-[#0a0a0a]">₹{order.totalPrice?.toLocaleString()}</p>
@@ -425,9 +431,11 @@ export default function ProfilePage() {
               ) : (
                 <div className="flex-1 overflow-y-auto p-5 space-y-4">
 
-                  {/* Status + Date */}
+                  {/* Status bar */}
                   <div className="border border-gray-100 p-4">
-                    <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-3">Order Status</p>
+                    <OrderStatusBar status={selectedOrder.status} />
+                    <div className="flex items-center justify-between mt-2">
                       <span className={`text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 ${statusStyle(selectedOrder.status)}`}>
                         {selectedOrder.status}
                       </span>

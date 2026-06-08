@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { ChevronRight, Lock, Plus, Trash2, ShieldCheck, Truck, Tag, Edit2, Check, Banknote, Smartphone, Gift, PartyPopper } from 'lucide-react';
 import Footer from '@/components/store/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PageTransition, StaggerContainer, StaggerItem, ListItem, ScaleIn, SlideUp } from '@/components/Motion';
 
 const STEPS = ['Address', 'Payment', 'Review', 'Confirm'];
 
@@ -180,11 +181,16 @@ export default function CheckoutPage() {
         <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
 
           {/* Step bar */}
-          <div className="flex items-center gap-0 mb-8 border border-gray-200 w-fit overflow-hidden">
+          <SlideUp className="flex items-center gap-0 mb-8 border border-gray-200 w-fit overflow-hidden">
             {STEPS.map((s, i) => (
-              <div key={s} className={`flex items-center gap-2 px-4 py-3 text-xs font-bold tracking-widest uppercase border-r last:border-r-0 transition-colors ${
-                i === step ? 'bg-[#0a0a0a] text-white' : i < step ? 'bg-[#dc2626] text-white cursor-pointer' : 'text-gray-400 bg-white'
-              }`}
+              <motion.div
+                key={s}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.1, duration: 0.3 }}
+                className={`flex items-center gap-2 px-4 py-3 text-xs font-bold tracking-widest uppercase border-r last:border-r-0 transition-colors ${
+                  i === step ? 'bg-[#0a0a0a] text-white' : i < step ? 'bg-[#dc2626] text-white cursor-pointer' : 'text-gray-400 bg-white'
+                }`}
                 onClick={() => i < step && setStep(i)}>
                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black border ${
                   i === step ? 'border-white text-white' : i < step ? 'border-white text-white' : 'border-gray-300 text-gray-400'
@@ -192,9 +198,9 @@ export default function CheckoutPage() {
                   {i < step ? '✓' : i + 1}
                 </span>
                 <span className="hidden sm:inline">{s}</span>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </SlideUp>
 
           <div className="flex flex-col lg:flex-row gap-6">
 
@@ -203,7 +209,7 @@ export default function CheckoutPage() {
 
               {/* ── STEP 0: ADDRESS ── */}
               {step === 0 && (
-                <div className="border border-gray-200">
+                <ScaleIn className="border border-gray-200">
                   <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                     <Truck size={15} className="text-[#dc2626]" />
                     <p className="text-sm font-black tracking-tight text-[#0a0a0a]">Select Delivery Address</p>
@@ -214,13 +220,14 @@ export default function CheckoutPage() {
                     ) : (
                       <>
                         {savedAddresses.length > 0 && (
-                          <div className="space-y-3 mb-4">
-                            {savedAddresses.map(addr => (
-                              <div key={addr._id} className={`border transition-colors ${
-                                selectedAddressId === addr._id && !showNewForm
-                                  ? 'border-[#0a0a0a] bg-gray-50'
-                                  : 'border-gray-200'
-                              }`}>
+                          <StaggerContainer className="space-y-3 mb-4">
+                            {savedAddresses.map((addr, idx) => (
+                              <StaggerItem key={addr._id}>
+                                <div className={`border transition-colors ${
+                                  selectedAddressId === addr._id && !showNewForm
+                                    ? 'border-[#0a0a0a] bg-gray-50'
+                                    : 'border-gray-200'
+                                }`}>
                                 {editingId === addr._id ? (
                                   <div className="p-4">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
@@ -256,15 +263,19 @@ export default function CheckoutPage() {
                                     </div>
                                   </div>
                                 )}
-                              </div>
+                                </div>
+                              </StaggerItem>
                             ))}
                             {pendingSelectId && (
-                              <button onClick={handleConfirmSelect}
+                              <motion.button
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                onClick={handleConfirmSelect}
                                 className="w-full bg-[#0a0a0a] text-white text-xs font-bold tracking-widest uppercase py-3 hover:bg-[#dc2626] transition-colors">
                                 Confirm This Address
-                              </button>
+                              </motion.button>
                             )}
-                          </div>
+                          </StaggerContainer>
                         )}
 
                         {!showNewForm ? (
@@ -273,7 +284,11 @@ export default function CheckoutPage() {
                             <Plus size={13} /> Add new address
                           </button>
                         ) : (
-                          <div className="border border-dashed border-gray-300 p-5">
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            transition={{ duration: 0.3 }}
+                            className="border border-dashed border-gray-300 p-5">
                             <div className="flex items-center justify-between mb-4">
                               <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400">New Address</p>
                               {savedAddresses.length > 0 && (
@@ -289,7 +304,7 @@ export default function CheckoutPage() {
                                   value={shipping[k]} onChange={e => setShipping(s => ({ ...s, [k]: e.target.value }))} />
                               ))}
                             </div>
-                          </div>
+                          </motion.div>
                         )}
                       </>
                     )}
@@ -299,21 +314,22 @@ export default function CheckoutPage() {
                       Continue to Payment →
                     </button>
                   </div>
-                </div>
+                </ScaleIn>
               )}
 
               {/* ── STEP 1: PAYMENT ── */}
               {step === 1 && (
-                <div className="border border-gray-200">
+                <ScaleIn className="border border-gray-200">
                   <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                     <ShieldCheck size={15} className="text-[#dc2626]" />
                     <p className="text-sm font-black tracking-tight text-[#0a0a0a]">Select Payment Method</p>
                   </div>
-                  <div className="p-5 space-y-3">
-                    {PAYMENT_METHODS.map(m => (
-                      <label key={m.id} className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${
-                        paymentMethod === m.id ? 'border-[#0a0a0a] bg-gray-50' : 'border-gray-200 hover:border-gray-400'
-                      }`}>
+                  <StaggerContainer className="p-5 space-y-3">
+                    {PAYMENT_METHODS.map((m, idx) => (
+                      <StaggerItem key={m.id}>
+                        <label className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${
+                          paymentMethod === m.id ? 'border-[#0a0a0a] bg-gray-50' : 'border-gray-200 hover:border-gray-400'
+                        }`}>
                         <input type="radio" name="payment" value={m.id}
                           checked={paymentMethod === m.id} onChange={() => setPaymentMethod(m.id)} className="sr-only" />
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
@@ -326,28 +342,33 @@ export default function CheckoutPage() {
                           <p className="text-sm font-bold text-[#0a0a0a]">{m.label}</p>
                           <p className="text-xs text-gray-400">{m.sub}</p>
                         </div>
-                      </label>
+                        </label>
+                      </StaggerItem>
                     ))}
                     {paymentMethod === 'UPI' && (
-                      <div className="border border-dashed border-gray-300 p-4 bg-gray-50">
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="border border-dashed border-gray-300 p-4 bg-gray-50">
                         <p className="text-xs font-bold text-[#0a0a0a] mb-2">Enter UPI ID</p>
                         <input type="text" placeholder="yourname@upi" className="border border-gray-200 px-3 py-2 text-sm w-full outline-none focus:border-[#0a0a0a]" />
                         <p className="text-[10px] text-gray-400 mt-1">You will receive a payment request on your UPI app</p>
-                      </div>
+                      </motion.div>
                     )}
                     <button onClick={() => setStep(2)}
                       className="w-full bg-[#0a0a0a] text-white text-xs font-bold tracking-widest uppercase py-4 hover:bg-[#dc2626] transition-colors mt-2">
                       Continue to Review →
                     </button>
-                  </div>
-                </div>
+                  </StaggerContainer>
+                </ScaleIn>
               )}
 
               {/* ── STEP 2: REVIEW ── */}
               {step === 2 && (
                 <>
                   {/* Delivery address summary */}
-                  <div className="border border-gray-200">
+                  <ScaleIn delay={0} className="border border-gray-200">
                     <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Truck size={15} className="text-[#dc2626]" />
@@ -359,10 +380,10 @@ export default function CheckoutPage() {
                       <p className="text-sm font-bold text-[#0a0a0a]">{activeShipping().fullName} <span className="text-xs text-gray-400 font-normal ml-2">{activeShipping().phone}</span></p>
                       <p className="text-sm text-gray-500 mt-1">{activeShipping().address}, {activeShipping().city} — {activeShipping().pin}, {activeShipping().country}</p>
                     </div>
-                  </div>
+                  </ScaleIn>
 
                   {/* Payment summary */}
-                  <div className="border border-gray-200">
+                  <ScaleIn delay={0.1} className="border border-gray-200">
                     <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <ShieldCheck size={15} className="text-[#dc2626]" />
@@ -376,20 +397,21 @@ export default function CheckoutPage() {
                         {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.label}
                       </div>
                     </div>
-                  </div>
+                  </ScaleIn>
 
                   {/* Order items */}
-                  <div className="border border-gray-200">
+                  <ScaleIn delay={0.2} className="border border-gray-200">
                     <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                       <Tag size={15} className="text-[#dc2626]" />
                       <p className="text-sm font-black tracking-tight text-[#0a0a0a]">Order Items ({cartItems.length})</p>
                     </div>
-                    <div className="divide-y divide-gray-100">
-                      {cartItems.map(item => {
+                    <StaggerContainer className="divide-y divide-gray-100">
+                      {cartItems.map((item, idx) => {
                         const salePrice = item.offerPrice || item.price;
                         const mrp = item.originalPrice || item.price;
                         return (
-                          <div key={item._id} className="flex items-center gap-4 px-5 py-4">
+                          <StaggerItem key={item._id}>
+                            <div className="flex items-center gap-4 px-5 py-4">
                             <img src={item.image || 'https://placehold.co/64x64?text=...'} alt={item.name}
                               className="w-16 h-16 object-cover border border-gray-100 shrink-0" />
                             <div className="flex-1 min-w-0">
@@ -401,14 +423,15 @@ export default function CheckoutPage() {
                               </div>
                             </div>
                             <p className="text-sm font-black text-[#0a0a0a] shrink-0">₹{(salePrice * item.qty).toLocaleString()}</p>
-                          </div>
+                            </div>
+                          </StaggerItem>
                         );
                       })}
-                    </div>
-                  </div>
+                    </StaggerContainer>
+                  </ScaleIn>
 
                   {/* Coupon */}
-                  <div className="border border-gray-200 p-5">
+                  <ScaleIn delay={0.3} className="border border-gray-200 p-5">
                     <p className="text-xs font-bold text-[#0a0a0a] mb-3 tracking-wide uppercase">Coupon Code</p>
                     {appliedCoupon ? (
                       <div className="flex items-center justify-between bg-green-50 border border-green-200 px-4 py-3">
@@ -427,7 +450,7 @@ export default function CheckoutPage() {
                       </div>
                     )}
                     {couponError && <p className="text-[#dc2626] text-xs mt-2">{couponError}</p>}
-                  </div>
+                  </ScaleIn>
 
                   <button onClick={() => setStep(3)}
                     className="w-full bg-[#0a0a0a] text-white text-xs font-bold tracking-widest uppercase py-4 hover:bg-[#dc2626] transition-colors">
@@ -439,7 +462,7 @@ export default function CheckoutPage() {
 
               {/* ── STEP 3: CONFIRM ── */}
               {step === 3 && (
-                <div className="border border-gray-200 p-6 text-center space-y-6">
+                <ScaleIn className="border border-gray-200 p-6 text-center space-y-6">
                   <div>
                     <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-2">Final Order Summary</p>
                     <h2 className="font-black text-2xl text-[#0a0a0a]">Confirm Your Order</h2>
@@ -482,13 +505,13 @@ export default function CheckoutPage() {
                     {loading ? 'Placing Order...' : '✓ Place Order Now'}
                   </button>
                   <button onClick={() => setStep(2)} className="text-xs text-gray-400 hover:text-[#0a0a0a]">← Go Back</button>
-                </div>
+                </ScaleIn>
               )}
             </div>
 
             {/* ── PRICE SUMMARY SIDEBAR ── */}
             <aside className="w-full lg:w-80 shrink-0">
-              <div className="border border-gray-200 lg:sticky lg:top-24">
+              <SlideUp delay={0.2} className="border border-gray-200 lg:sticky lg:top-24">
                 <div className="px-5 py-4 border-b border-gray-100">
                   <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400">Price Details</p>
                 </div>
@@ -531,7 +554,7 @@ export default function CheckoutPage() {
                     <p className="text-[10px] text-gray-400">Safe & Secure Payments</p>
                   </div>
                 </div>
-              </div>
+              </SlideUp>
             </aside>
           </div>
         </div>
