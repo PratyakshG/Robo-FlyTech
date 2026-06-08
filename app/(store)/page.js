@@ -86,7 +86,7 @@ export default function HomePage() {
                     <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.6 }}
                       className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/60 mb-4 flex items-center gap-2">
                       <span className="w-2 h-2 bg-[#dc2626] inline-block" />
-                      VOL.04 / FEB 2026 / <span className="text-[#dc2626]">NEW SEASON</span>
+                      {heroSlides[heroIndex]?.badge || 'ROBO FLYTECH'}
                     </motion.p>
                     <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.7 }}
                       className="font-black text-[3.2rem] leading-[0.9] tracking-[-0.04em] text-white mb-5">
@@ -141,7 +141,7 @@ export default function HomePage() {
                   <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6 }}
                     className="text-[11px] font-semibold tracking-[0.2em] uppercase text-gray-500 mb-6 flex items-center gap-3">
                     <span className="w-2 h-2 bg-[#dc2626] inline-block" />
-                    VOL.04 / FEB 2026 / <span className="text-[#dc2626]">NEW SEASON</span>
+                    {heroSlides[heroIndex]?.badge || 'ROBO FLYTECH'}
                   </motion.p>
                   <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.7 }}
                     className="font-black text-[4rem] lg:text-[5.5rem] leading-[0.88] tracking-[-0.04em] text-[#0a0a0a] mb-8">

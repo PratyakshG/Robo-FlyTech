@@ -9,6 +9,7 @@ import { getProfile, updateProfile, changePassword, getMyOrders, getAddresses, a
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, MapPin, Lock, ShoppingBag, Save, Eye, EyeOff, Package, LogOut, Settings, Heart, X, ChevronRight, Truck, CreditCard, Tag, PartyPopper, Smartphone } from 'lucide-react';
 import OrderStatusBar from '@/components/OrderStatusBar';
+import { INDIAN_STATES, fetchPincodeDetails } from '@/utils/indianStates';
 
 const TABS = [
   { id: 'orders',   label: 'Orders',    icon: ShoppingBag },
@@ -36,7 +37,7 @@ export default function ProfilePage() {
   const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
-  const EMPTY_ADDR = { fullName: '', phone: '', address: '', city: '', pin: '', country: 'India' };
+  const EMPTY_ADDR = { fullName: '', phone: '', address: '', landmark: '', city: '', state: '', pin: '', country: 'India' };
   const [addresses, setAddresses] = useState([]);
   const [addrModal, setAddrModal] = useState(false);
   const [addrForm, setAddrForm] = useState(EMPTY_ADDR);
@@ -55,8 +56,17 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    document.body.style.overflow = (addrModal || selectedOrder) ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    if (addrModal || selectedOrder) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '0px';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
   }, [addrModal, selectedOrder]);
 
   useEffect(() => {
@@ -278,8 +288,8 @@ export default function ProfilePage() {
                           <div key={addr._id} className="border border-gray-200 p-4 hover:border-[#0a0a0a] transition-colors">
                             <p className="font-bold text-sm text-[#0a0a0a]">{addr.fullName}</p>
                             <p className="text-xs text-gray-500 mt-0.5">{addr.phone}</p>
-                            <p className="text-sm text-gray-500 mt-1">{addr.address}</p>
-                            <p className="text-sm text-gray-500">{addr.city} — {addr.pin}, {addr.country}</p>
+                            <p className="text-sm text-gray-500 mt-1">{addr.address}{addr.landmark ? `, ${addr.landmark}` : ''}</p>
+                            <p className="text-sm text-gray-500">{addr.city}, {addr.state} — {addr.pin}, {addr.country}</p>
                             <button onClick={() => removeAddress(addr._id)}
                               className="mt-3 text-xs text-[#dc2626] hover:text-red-700 font-semibold transition-colors">Remove</button>
                           </div>
@@ -366,8 +376,8 @@ export default function ProfilePage() {
             <motion.div key="addr-modal"
               initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 40 }} transition={{ duration: 0.2 }}
-              className="fixed inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center z-50 p-0 md:p-4">
-              <div className="bg-white w-full md:max-w-md md:border md:border-gray-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+              className="fixed inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center z-50 p-0 md:p-4 pointer-events-none">
+              <div className="bg-white w-full md:max-w-md md:border md:border-gray-200 shadow-2xl max-h-[90vh] overflow-y-auto pointer-events-auto">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white">
                   <h2 className="font-black text-base tracking-tight">Add Address</h2>
                   <button onClick={() => setAddrModal(false)} className="p-1 text-gray-400 hover:text-gray-700">
@@ -379,15 +389,34 @@ export default function ProfilePage() {
                     { key: 'fullName', label: 'Full Name',      type: 'text', span: true },
                     { key: 'phone',    label: 'Phone',           type: 'tel',  span: true },
                     { key: 'address',  label: 'Street Address',  type: 'text', span: true },
-                    { key: 'city',     label: 'City',            type: 'text', span: false },
+                    { key: 'landmark', label: 'Landmark (Optional)', type: 'text', span: true },
                     { key: 'pin',      label: 'PIN Code',        type: 'text', span: false },
+                    { key: 'city',     label: 'City',            type: 'text', span: false },
+                    { key: 'state',    label: 'State',           type: 'select', span: true },
                     { key: 'country',  label: 'Country',         type: 'text', span: true },
                   ].map(f => (
                     <div key={f.key} className={f.span ? '' : 'inline-block w-[calc(50%-6px)] mr-3 last:mr-0'}>
                       <label className="block text-[10px] font-bold tracking-[0.15em] uppercase text-gray-400 mb-1.5">{f.label}</label>
-                      <input className="input-field" type={f.type} placeholder={f.label} required={f.key !== 'country'}
-                        value={addrForm[f.key]}
-                        onChange={e => setAddrForm(a => ({ ...a, [f.key]: e.target.value }))} />
+                      {f.type === 'select' ? (
+                        <select className="input-field" required={f.key !== 'country'}
+                          value={addrForm[f.key]}
+                          onChange={e => setAddrForm(a => ({ ...a, [f.key]: e.target.value }))}>
+                          <option value="">Select State</option>
+                          {INDIAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
+                        </select>
+                      ) : (
+                        <input className="input-field" type={f.type} placeholder={f.label} required={f.key !== 'landmark' && f.key !== 'country'}
+                          value={addrForm[f.key]}
+                          onChange={async (e) => {
+                            setAddrForm(a => ({ ...a, [f.key]: e.target.value }));
+                            if (f.key === 'pin' && e.target.value.length === 6) {
+                              const details = await fetchPincodeDetails(e.target.value);
+                              if (details) {
+                                setAddrForm(a => ({ ...a, city: details.city, state: details.state, country: details.country }));
+                              }
+                            }
+                          }} />
+                      )}
                     </div>
                   ))}
                   <div className="flex gap-3 pt-2">
@@ -468,8 +497,8 @@ export default function ProfilePage() {
                     </p>
                     <p className="text-sm font-bold text-[#0a0a0a]">{selectedOrder.shippingAddress?.fullName}</p>
                     <p className="text-xs text-gray-500 mt-0.5">{selectedOrder.shippingAddress?.phone}</p>
-                    <p className="text-xs text-gray-500">{selectedOrder.shippingAddress?.address}</p>
-                    <p className="text-xs text-gray-500">{selectedOrder.shippingAddress?.city} — {selectedOrder.shippingAddress?.pin}, {selectedOrder.shippingAddress?.country}</p>
+                    <p className="text-xs text-gray-500">{selectedOrder.shippingAddress?.address}{selectedOrder.shippingAddress?.landmark ? `, ${selectedOrder.shippingAddress.landmark}` : ''}</p>
+                    <p className="text-xs text-gray-500">{selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state} — {selectedOrder.shippingAddress?.pin}, {selectedOrder.shippingAddress?.country}</p>
                   </div>
 
                   {/* Items */}

@@ -10,6 +10,7 @@ import { ChevronRight, Lock, Plus, Trash2, ShieldCheck, Truck, Tag, Edit2, Check
 import Footer from '@/components/store/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageTransition, StaggerContainer, StaggerItem, ListItem, ScaleIn, SlideUp } from '@/components/Motion';
+import { INDIAN_STATES, fetchPincodeDetails } from '@/utils/indianStates';
 
 const STEPS = ['Address', 'Payment', 'Review', 'Confirm'];
 
@@ -42,7 +43,7 @@ export default function CheckoutPage() {
   const [showNewForm, setShowNewForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [addrLoading, setAddrLoading] = useState(true);
-  const emptyAddr = { fullName: '', phone: '', address: '', city: '', pin: '', country: 'India' };
+  const emptyAddr = { fullName: '', phone: '', address: '', landmark: '', city: '', state: '', pin: '', country: 'India' };
   const [shipping, setShipping] = useState(emptyAddr);
   const [editForm, setEditForm] = useState(emptyAddr);
 
@@ -117,7 +118,8 @@ export default function CheckoutPage() {
 
   const handleContinueToPayment = async () => {
     if (showNewForm) {
-      if (Object.values(shipping).some(v => !v)) return setError('Please fill all address fields');
+      const requiredFields = ['fullName', 'phone', 'address', 'city', 'state', 'pin'];
+      if (requiredFields.some(field => !shipping[field])) return setError('Please fill all required address fields');
       try {
         const res = await addAddress(shipping);
         const newAddrs = res.data || [];
@@ -233,10 +235,19 @@ export default function CheckoutPage() {
                                   <div className="p-4">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                                       {[['fullName','Full Name','sm:col-span-2','text'],['phone','Phone','sm:col-span-2','tel'],
-                                        ['address','Street Address','sm:col-span-2','text'],['city','City','','text'],
-                                        ['pin','PIN','','text'],['country','Country','','text']].map(([k,ph,span,t]) => (
-                                        <input key={k} placeholder={ph} type={t} className={`${span} border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#0a0a0a]`}
-                                          value={editForm[k]} onChange={e => setEditForm(f => ({ ...f, [k]: e.target.value }))} />
+                                        ['address','Street Address','sm:col-span-2','text'],['landmark','Landmark (Optional)','sm:col-span-2','text'],
+                                        ['pin','PIN','','text'],['city','City','','text'],
+                                        ['state','State','sm:col-span-2','select'],['country','Country','','text']].map(([k,ph,span,t]) => (
+                                        t === 'select' ? (
+                                          <select key={k} className={`${span} border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#0a0a0a]`}
+                                            value={editForm[k]} onChange={e => setEditForm(f => ({ ...f, [k]: e.target.value }))} required>
+                                            <option value="">Select State</option>
+                                            {INDIAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
+                                          </select>
+                                        ) : (
+                                          <input key={k} placeholder={ph} type={t} className={`${span} border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#0a0a0a]`}
+                                            value={editForm[k]} onChange={e => setEditForm(f => ({ ...f, [k]: e.target.value }))} required={k !== 'landmark' && k !== 'country'} />
+                                        )
                                       ))}
                                     </div>
                                     <div className="flex gap-2">
@@ -254,7 +265,8 @@ export default function CheckoutPage() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <p className="text-sm font-bold text-[#0a0a0a]">{addr.fullName} <span className="text-xs text-gray-400 font-normal ml-2">{addr.phone}</span></p>
-                                      <p className="text-xs text-gray-500 mt-0.5">{addr.address}, {addr.city} — {addr.pin}, {addr.country}</p>
+                                      <p className="text-xs text-gray-500 mt-0.5">{addr.address}{addr.landmark ? `, ${addr.landmark}` : ''}</p>
+                                      <p className="text-xs text-gray-500">{addr.city}, {addr.state} — {addr.pin}, {addr.country}</p>
                                     </div>
                                     <div className="flex gap-1 shrink-0">
                                       <button onClick={e => { e.stopPropagation(); setEditingId(addr._id); setEditForm({ fullName: addr.fullName, phone: addr.phone, address: addr.address, city: addr.city, pin: addr.pin, country: addr.country }); }}
@@ -285,11 +297,7 @@ export default function CheckoutPage() {
                             <Plus size={13} /> Add new address
                           </button>
                         ) : (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            transition={{ duration: 0.3 }}
-                            className="border border-dashed border-gray-300 p-5">
+                          <div className="border border-dashed border-gray-300 p-5">
                             <div className="flex items-center justify-between mb-4">
                               <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400">New Address</p>
                               {savedAddresses.length > 0 && (
@@ -299,13 +307,32 @@ export default function CheckoutPage() {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {[['fullName','Full Name','sm:col-span-2','text'],['phone','Phone Number','sm:col-span-2','tel'],
-                                ['address','Street Address','sm:col-span-2','text'],['city','City','','text'],
-                                ['pin','PIN Code','','text'],['country','Country','','text']].map(([k,ph,span,t]) => (
-                                <input key={k} placeholder={ph} type={t} className={`${span} border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#0a0a0a] transition-colors`}
-                                  value={shipping[k]} onChange={e => setShipping(s => ({ ...s, [k]: e.target.value }))} />
+                                ['address','Street Address','sm:col-span-2','text'],['landmark','Landmark (Optional)','sm:col-span-2','text'],
+                                ['pin','PIN Code','','text'],['city','City','','text'],
+                                ['state','State','sm:col-span-2','select'],['country','Country','','text']].map(([k,ph,span,t]) => (
+                                t === 'select' ? (
+                                  <select key={k} className={`${span} border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#0a0a0a] transition-colors`}
+                                    value={shipping[k]} onChange={e => setShipping(s => ({ ...s, [k]: e.target.value }))} required>
+                                    <option value="">Select State</option>
+                                    {INDIAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
+                                  </select>
+                                ) : (
+                                  <input key={k} placeholder={ph} type={t} className={`${span} border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#0a0a0a] transition-colors`}
+                                    value={shipping[k]} 
+                                    onChange={async (e) => {
+                                      setShipping(s => ({ ...s, [k]: e.target.value }));
+                                      if (k === 'pin' && e.target.value.length === 6) {
+                                        const details = await fetchPincodeDetails(e.target.value);
+                                        if (details) {
+                                          setShipping(s => ({ ...s, city: details.city, state: details.state, country: details.country }));
+                                        }
+                                      }
+                                    }}
+                                    required={k !== 'landmark' && k !== 'country'} />
+                                )
                               ))}
                             </div>
-                          </motion.div>
+                          </div>
                         )}
                       </>
                     )}
@@ -368,7 +395,8 @@ export default function CheckoutPage() {
                     </div>
                     <div className="px-5 py-4">
                       <p className="text-sm font-bold text-[#0a0a0a]">{activeShipping().fullName} <span className="text-xs text-gray-400 font-normal ml-2">{activeShipping().phone}</span></p>
-                      <p className="text-sm text-gray-500 mt-1">{activeShipping().address}, {activeShipping().city} — {activeShipping().pin}, {activeShipping().country}</p>
+                      <p className="text-sm text-gray-500 mt-1">{activeShipping().address}{activeShipping().landmark ? `, ${activeShipping().landmark}` : ''}</p>
+                      <p className="text-sm text-gray-500">{activeShipping().city}, {activeShipping().state} — {activeShipping().pin}, {activeShipping().country}</p>
                     </div>
                   </ScaleIn>
 
@@ -486,7 +514,7 @@ export default function CheckoutPage() {
                     )}
                   </div>
                   <div className="text-left text-sm text-gray-500 space-y-1">
-                    <p><span className="font-bold text-[#0a0a0a]">Ship to:</span> {activeShipping().fullName}, {activeShipping().address}, {activeShipping().city} — {activeShipping().pin}</p>
+                    <p><span className="font-bold text-[#0a0a0a]">Ship to:</span> {activeShipping().fullName}, {activeShipping().address}{activeShipping().landmark ? `, ${activeShipping().landmark}` : ''}, {activeShipping().city}, {activeShipping().state} — {activeShipping().pin}</p>
                     <p><span className="font-bold text-[#0a0a0a]">Pay via:</span> {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.label}</p>
                   </div>
                   {error && <p className="text-[#dc2626] text-xs font-semibold">{error}</p>}
