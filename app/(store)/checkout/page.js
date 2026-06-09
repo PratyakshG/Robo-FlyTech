@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/store/Navbar';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { createOrder, getAddresses, addAddress, deleteAddress, updateAddress, getProfile } from '@/lib/api';
+import { createOrder, getAddresses, addAddress, deleteAddress, updateAddress, getProfile, validateCoupon } from '@/lib/api';
 import Link from 'next/link';
 import { ChevronRight, Lock, Plus, Trash2, ShieldCheck, Truck, Tag, Edit2, Check, Banknote, Smartphone, Gift, PartyPopper } from 'lucide-react';
 import Footer from '@/components/store/Footer';
@@ -17,11 +17,6 @@ const STEPS = ['Address', 'Payment', 'Review', 'Confirm'];
 const PAYMENT_METHODS = [
   { id: 'COD', label: 'Cash on Delivery', sub: 'Pay when your order arrives', icon: <Banknote size={18} /> },
   { id: 'UPI', label: 'UPI', sub: 'Admin will contact you via WhatsApp', icon: <Smartphone size={18} /> },
-];
-
-const VALID_COUPONS = [
-  { code: 'FIRST10', type: 'percentage', value: 10, min: 500 },
-  { code: 'FLAT200', type: 'flat', value: 200, min: 1000 },
 ];
 
 function CheckoutContent() {
@@ -77,11 +72,7 @@ function CheckoutContent() {
   const [couponError, setCouponError] = useState('');
 
   const shippingCost = checkoutTotalPrice > 999 ? 0 : 99;
-  const couponDiscount = appliedCoupon
-    ? appliedCoupon.type === 'percentage'
-      ? Math.round(checkoutTotalPrice * appliedCoupon.value / 100)
-      : appliedCoupon.value
-    : 0;
+  const couponDiscount = appliedCoupon?.discount || 0;
   const total = checkoutTotalPrice + shippingCost - couponDiscount;
   const totalSaved = (checkoutMrpTotal - checkoutTotalPrice) + (shippingCost === 0 ? 99 : 0) + couponDiscount;
 
@@ -121,13 +112,22 @@ function CheckoutContent() {
     } catch { setError('Failed to update address'); }
   };
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     setCouponError('');
-    const found = VALID_COUPONS.find(c => c.code === couponInput.trim().toUpperCase());
-    if (!found) return setCouponError('Invalid coupon code');
-    if (checkoutTotalPrice < found.min) return setCouponError(`Minimum order ₹${found.min} required`);
-    setAppliedCoupon(found);
-    setCouponInput('');
+    if (!couponInput.trim()) return setCouponError('Please enter a coupon code');
+    
+    try {
+      const res = await validateCoupon(couponInput.trim(), checkoutTotalPrice);
+      setAppliedCoupon({ 
+        code: res.data.coupon.code, 
+        discount: res.data.discount,
+        type: res.data.coupon.type,
+        value: res.data.coupon.value
+      });
+      setCouponInput('');
+    } catch (err) {
+      setCouponError(err.response?.data?.message || 'Failed to apply coupon');
+    }
   };
 
   const handleConfirmSelect = () => {
