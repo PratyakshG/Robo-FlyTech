@@ -23,7 +23,8 @@ function ProductsContent() {
 
   // active filters
   const [category, setCategory]         = useState(searchParams.get('category') || 'All');
-  const [search]                        = useState(searchParams.get('search') || '');
+  const [search, setSearch]             = useState(searchParams.get('search') || '');
+  const [searchInput, setSearchInput]   = useState(searchParams.get('search') || '');
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [maxPrice, setMaxPrice]         = useState(null); // null = not set yet
   const [displayPrice, setDisplayPrice] = useState(null); // tracks slider UI without triggering fetch
@@ -101,29 +102,62 @@ function ProductsContent() {
             <span className="text-[#0a0a0a]">{category === 'All' ? 'All Products' : category}</span>
           </div>
 
-          {/* Page header */}
-          <div className="flex items-end justify-between mb-6 border-b border-gray-200 pb-6">
-            <div>
-              <p className="section-label mb-1">[ CATALOGUE / {String(total).padStart(3, '0')} ITEMS ]</p>
-              <h1 className="font-black text-[2rem] md:text-[3.5rem] tracking-[-0.04em] leading-none text-[#0a0a0a]">
-                {category === 'All' ? 'All Products' : category}
-              </h1>
+          {/* Page header with search */}
+          <div className="mb-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-200 pb-6">
+              <div>
+                <p className="section-label mb-1">[ CATALOGUE / {String(total).padStart(3, '0')} ITEMS ]</p>
+                <h1 className="font-black text-[2rem] md:text-[3.5rem] tracking-[-0.04em] leading-none text-[#0a0a0a]">
+                  {category === 'All' ? 'All Products' : category}
+                </h1>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* Mobile filter toggle */}
+                <button onClick={() => setFilterOpen(true)}
+                  className="lg:hidden flex items-center gap-2 border border-gray-200 px-3 py-2 text-xs font-bold tracking-widest uppercase hover:border-[#0a0a0a] transition-colors">
+                  <SlidersHorizontal size={13} /> Filters
+                </button>
+                <select
+                  value={sort}
+                  onChange={e => setSort(e.target.value)}
+                  className="border border-gray-200 text-xs font-semibold tracking-widest uppercase px-3 md:px-4 py-2.5 bg-white text-[#0a0a0a] cursor-pointer hover:border-[#0a0a0a] transition-colors outline-none">
+                  <option value="featured">FEATURED</option>
+                  <option value="price-asc">PRICE: LOW–HIGH</option>
+                  <option value="price-desc">PRICE: HIGH–LOW</option>
+                  <option value="rating">TOP RATED</option>
+                </select>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Mobile filter toggle */}
-              <button onClick={() => setFilterOpen(true)}
-                className="lg:hidden flex items-center gap-2 border border-gray-200 px-3 py-2 text-xs font-bold tracking-widest uppercase hover:border-[#0a0a0a] transition-colors">
-                <SlidersHorizontal size={13} /> Filters
-              </button>
-              <select
-                value={sort}
-                onChange={e => setSort(e.target.value)}
-                className="border border-gray-200 text-xs font-semibold tracking-widest uppercase px-3 md:px-4 py-2.5 bg-white text-[#0a0a0a] cursor-pointer hover:border-[#0a0a0a] transition-colors outline-none">
-                <option value="featured">FEATURED</option>
-                <option value="price-asc">PRICE: LOW–HIGH</option>
-                <option value="price-desc">PRICE: HIGH–LOW</option>
-                <option value="rating">TOP RATED</option>
-              </select>
+            
+            {/* Search bar */}
+            <div className="mt-4">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Search products by name, brand, or category..."
+                  value={searchInput}
+                  onChange={e => setSearchInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { setSearch(searchInput); setPage(1); } }}
+                  className="flex-1 border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#0a0a0a] transition-colors placeholder:text-gray-400"
+                />
+                <button
+                  onClick={() => { setSearch(searchInput); setPage(1); }}
+                  className="bg-[#0a0a0a] text-white px-6 py-3 text-xs font-bold tracking-widest uppercase hover:bg-[#dc2626] transition-colors">
+                  Search
+                </button>
+                {search && (
+                  <button
+                    onClick={() => { setSearch(''); setSearchInput(''); setPage(1); }}
+                    className="border border-gray-200 px-4 py-3 text-xs font-bold tracking-widest uppercase hover:border-[#0a0a0a] transition-colors">
+                    Clear
+                  </button>
+                )}
+              </div>
+              {search && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Showing results for: <span className="font-bold text-[#0a0a0a]">"{search}"</span>
+                </p>
+              )}
             </div>
           </div>
 

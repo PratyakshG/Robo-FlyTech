@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Zap, Truck, ShieldCheck, RotateCcw, Headphones } from 'lucide-react';
 import Footer from '@/components/store/Footer';
+import { useRouter } from 'next/navigation';
+import { useCart } from '@/context/CartContext';
 
 const PERKS = [
   { icon: Truck,        title: 'Fast Shipping',    sub: 'Quick delivery on all orders' },
@@ -30,6 +32,26 @@ export default function HomePage() {
   const [heroIdx, setHeroIdx] = useState(0);
   const heroIndex = heroSlides.length ? heroIdx % heroSlides.length : 0;
   const [categories, setCategories] = useState([]);
+  const router = useRouter();
+  const { addToCart } = useCart();
+
+  const handleHeroBuyNow = async (slide) => {
+    if (slide.buttonLink === 'buy-now' && slide.product) {
+      try {
+        const response = await fetch(`http://localhost:5000/api/products/${slide.product}`);
+        const productData = await response.json();
+        const buyNowItem = { 
+          ...productData, 
+          qty: 1,
+          _id: productData._id
+        };
+        sessionStorage.setItem('buyNowItem', JSON.stringify(buyNowItem));
+        router.push('/checkout?buyNow=true');
+      } catch (err) {
+        console.error('Failed to fetch product', err);
+      }
+    }
+  };
 
   useEffect(() => {
     getProductsWithOffers({ sort: 'newest', limit: 8 }).then(r => {
@@ -101,10 +123,18 @@ export default function HomePage() {
                       </motion.p>
                     )}
                     <div className="flex gap-3">
-                      <Link href={heroSlides[heroIndex]?.buttonLink || '/products'}
-                        className="flex items-center gap-2 bg-white text-[#0a0a0a] px-5 py-3 text-sm font-bold hover:bg-[#dc2626] hover:text-white transition-colors">
-                        {heroSlides[heroIndex]?.buttonText || 'Shop'} <ArrowRight size={14} />
-                      </Link>
+                      {heroSlides[heroIndex]?.buttonLink === 'buy-now' ? (
+                        <button
+                          onClick={() => handleHeroBuyNow(heroSlides[heroIndex])}
+                          className="flex items-center gap-2 bg-white text-[#0a0a0a] px-5 py-3 text-sm font-bold hover:bg-[#dc2626] hover:text-white transition-colors">
+                          {heroSlides[heroIndex]?.buttonText || 'Buy Now'} <ArrowRight size={14} />
+                        </button>
+                      ) : (
+                        <Link href={heroSlides[heroIndex]?.buttonLink || '/products'}
+                          className="flex items-center gap-2 bg-white text-[#0a0a0a] px-5 py-3 text-sm font-bold hover:bg-[#dc2626] hover:text-white transition-colors">
+                          {heroSlides[heroIndex]?.buttonText || 'Shop'} <ArrowRight size={14} />
+                        </Link>
+                      )}
                       <Link href="/products?deals=true" className="flex items-center gap-2 border border-white/50 text-white px-5 py-3 text-sm font-semibold hover:bg-white/10 transition-colors">
                         Deals <Zap size={13} />
                       </Link>
@@ -157,10 +187,18 @@ export default function HomePage() {
                   )}
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6 }}
                     className="flex gap-3 flex-wrap">
-                    <Link href={heroSlides[heroIndex]?.buttonLink || '/products'}
-                      className="flex items-center gap-2 bg-[#0a0a0a] text-white px-7 py-3.5 text-sm font-semibold hover:bg-[#dc2626] transition-colors">
-                      {heroSlides[heroIndex]?.buttonText || 'Shop everything'} <ArrowRight size={15} />
-                    </Link>
+                    {heroSlides[heroIndex]?.buttonLink === 'buy-now' ? (
+                      <button
+                        onClick={() => handleHeroBuyNow(heroSlides[heroIndex])}
+                        className="flex items-center gap-2 bg-[#0a0a0a] text-white px-7 py-3.5 text-sm font-semibold hover:bg-[#dc2626] transition-colors">
+                        {heroSlides[heroIndex]?.buttonText || 'Buy Now'} <ArrowRight size={15} />
+                      </button>
+                    ) : (
+                      <Link href={heroSlides[heroIndex]?.buttonLink || '/products'}
+                        className="flex items-center gap-2 bg-[#0a0a0a] text-white px-7 py-3.5 text-sm font-semibold hover:bg-[#dc2626] transition-colors">
+                        {heroSlides[heroIndex]?.buttonText || 'Shop everything'} <ArrowRight size={15} />
+                      </Link>
+                    )}
                     <Link href="/products?deals=true" className="flex items-center gap-2 border-[1.5px] border-[#0a0a0a] text-[#0a0a0a] px-7 py-3.5 text-sm font-semibold hover:bg-[#0a0a0a] hover:text-white transition-colors">
                       Today's deals <Zap size={14} />
                     </Link>

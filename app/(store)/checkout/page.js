@@ -181,6 +181,13 @@ function CheckoutContent() {
     }
   };
 
+  useEffect(() => {
+    const isBuyNow = searchParams.get('buyNow') === 'true';
+    if (checkoutItems.length === 0 && !orderPlaced && !isBuyNow) {
+      router.replace('/products');
+    }
+  }, [checkoutItems.length, orderPlaced, router, searchParams]);
+
   if (!user) return (
     <>
       <Navbar />
@@ -196,7 +203,7 @@ function CheckoutContent() {
     </>
   );
 
-  if (checkoutItems.length === 0 && !orderPlaced) { router.replace('/products'); return null; }
+  if (checkoutItems.length === 0 && !orderPlaced) return null;
 
   return (
     <>

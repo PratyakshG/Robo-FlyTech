@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, Pencil, Trash2, X, Save, ImageIcon, GripVertical, Eye, EyeOff, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
-const EMPTY_EDIT = { image: '', label: '', tag: '', heading: '', subtext: '', buttonText: '', buttonLink: '/products', active: true, order: 0 };
+const EMPTY_EDIT = { image: '', label: '', tag: '', badge: '', heading: '', subtext: '', buttonText: '', buttonLink: '', product: null, active: true, order: 0 };
 
 export default function AdminHeroSlidesPage() {
   const [slides, setSlides]       = useState([]);
@@ -14,6 +14,8 @@ export default function AdminHeroSlidesPage() {
   const [form, setForm]           = useState(EMPTY_EDIT);
   const [saving, setSaving]       = useState(false);
   const [deleteId, setDeleteId]   = useState(null);
+  const [products, setProducts]   = useState([]);
+  const [productSearch, setProductSearch] = useState('');
 
   // bulk upload state
   const [previews, setPreviews]   = useState([]);     // [{ file, localUrl, status: 'pending'|'uploading'|'done'|'error', url }]
@@ -28,7 +30,9 @@ export default function AdminHeroSlidesPage() {
     setSlides(r.data || []);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { 
+    load();
+  }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -80,7 +84,21 @@ export default function AdminHeroSlidesPage() {
   };
 
   // ── Edit single slide ────────────────────────────────────────
-  const openEdit = (s) => { setEditModal(s); setForm({ ...s }); };
+  const openEdit = (s) => { 
+    setEditModal(s); 
+    setForm({ ...s });
+    setProductSearch(''); // Reset search
+    // Load products when modal opens
+    if (products.length === 0) {
+      fetch('http://localhost:5000/api/products?limit=0')
+        .then(res => res.json())
+        .then(data => {
+          console.log('Products fetched:', data);
+          setProducts(data.products || []);
+        })
+        .catch(err => console.error('Failed to fetch products:', err));
+    }
+  };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
@@ -274,6 +292,12 @@ export default function AdminHeroSlidesPage() {
                   </div>
 
                   <div>
+                    <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Badge</label>
+                    <input className="input-field" placeholder="e.g. ROBO FLYTECH"
+                      value={form.badge || ''} onChange={e => set('badge', e.target.value)} />
+                  </div>
+
+                  <div>
                     <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Heading</label>
                     <input className="input-field" placeholder="e.g. Built for the Signal."
                       value={form.heading} onChange={e => set('heading', e.target.value)} />
@@ -294,10 +318,53 @@ export default function AdminHeroSlidesPage() {
                     </div>
                     <div>
                       <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Button Link</label>
-                      <input className="input-field" placeholder="/products"
-                        value={form.buttonLink} onChange={e => set('buttonLink', e.target.value)} />
+                      <select className="input-field" value={form.buttonLink} onChange={e => set('buttonLink', e.target.value)}>
+                        <option value="/products">Products Page</option>
+                        <option value="/cart">Cart</option>
+                        <option value="/about">About Us</option>
+                        <option value="/products?deals=true">Deals</option>
+                        <option value="/">Home</option>
+                        <option value="buy-now">Buy Now (Select Product Below)</option>
+                      </select>
                     </div>
                   </div>
+
+                  {form.buttonLink === 'buy-now' && (
+                    <div>
+                      <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Select Product for Buy Now</label>
+                      {products.length === 0 ? (
+                        <p className="text-xs text-gray-400 py-2">Loading products...</p>
+                      ) : (
+                        <>
+                          <input
+                            type="text"
+                            placeholder="Search products..."
+                            value={productSearch}
+                            onChange={e => setProductSearch(e.target.value)}
+                            className="input-field mb-2"
+                          />
+                          <select 
+                            className="input-field" 
+                            value={form.product || ''} 
+                            onChange={e => set('product', e.target.value || null)}
+                            size="8">
+                            <option value="">-- Choose a product --</option>
+                            {products
+                              .filter(p => 
+                                productSearch === '' || 
+                                p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+                                (p.brand && p.brand.toLowerCase().includes(productSearch.toLowerCase())) ||
+                                (p.category && p.category.toLowerCase().includes(productSearch.toLowerCase()))
+                              )
+                              .map(p => (
+                                <option key={p._id} value={p._id}>{p.name} - ₹{p.price}</option>
+                              ))}
+                          </select>
+                        </>
+                      )}
+                      <p className="text-[10px] text-gray-400 mt-1">This product will be added to cart and user will go to checkout</p>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Display Order</label>
