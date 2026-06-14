@@ -3,18 +3,37 @@ import { useEffect, useState } from 'react';
 import { getProducts, deleteProduct } from '@/lib/api';
 import { ProductModal } from '@/components/admin/ProductForm';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
 export default function AdminProductsPage() {
   const [products, setProducts]   = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing]     = useState(null);       // null = add, object = edit
   const [deleteId, setDeleteId]   = useState(null);       // confirm delete modal
   const { showToast } = useToast();
 
-  const load = () => getProducts({ limit: 100 }).then(r => setProducts(r.data.products));
+  const load = () => getProducts({ limit: 100 }).then(r => {
+    setProducts(r.data.products);
+    setFilteredProducts(r.data.products);
+  });
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredProducts(products);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    const filtered = products.filter(p => 
+      p.name.toLowerCase().includes(query) ||
+      p.category.toLowerCase().includes(query) ||
+      p.brand.toLowerCase().includes(query)
+    );
+    setFilteredProducts(filtered);
+  }, [searchQuery, products]);
 
   const openAdd  = ()        => { setEditing(null); setModalOpen(true); };
   const openEdit = (product) => { setEditing(product); setModalOpen(true); };
@@ -30,12 +49,24 @@ export default function AdminProductsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 gap-4">
         <h1 className="section-title">Products</h1>
-        <motion.button whileTap={{ scale: 0.97 }} onClick={openAdd}
-          className="btn-primary flex items-center gap-2 px-5 py-2.5">
-          <Plus size={15} /> Add Product
-        </motion.button>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="border border-gray-200 pl-10 pr-4 py-2 text-sm outline-none focus:border-[#0a0a0a] transition-colors w-64"
+            />
+          </div>
+          <motion.button whileTap={{ scale: 0.97 }} onClick={openAdd}
+            className="btn-primary flex items-center gap-2 px-5 py-2.5 whitespace-nowrap">
+            <Plus size={15} /> Add Product
+          </motion.button>
+        </div>
       </div>
 
       {/* Table */}
@@ -49,7 +80,7 @@ export default function AdminProductsPage() {
             </tr>
           </thead>
           <tbody>
-            {products.map(p => (
+            {filteredProducts.map(p => (
               <tr key={p._id}>
                 <td>
                   <img src={p.image || 'https://placehold.co/48x48?text=...'} alt={p.name}
@@ -80,6 +111,11 @@ export default function AdminProductsPage() {
             ))}
           </tbody>
         </table>
+        {filteredProducts.length === 0 && products.length > 0 && (
+          <div className="text-center py-14">
+            <p className="text-gray-400 text-sm">No products found matching "{searchQuery}"</p>
+          </div>
+        )}
         {products.length === 0 && (
           <div className="text-center py-14">
             <p className="text-gray-400 text-sm mb-3">No products yet</p>

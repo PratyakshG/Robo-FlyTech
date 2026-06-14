@@ -8,7 +8,7 @@ import Footer from '@/components/store/Footer';
 import ProductCard from '@/components/store/ProductCard';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Truck, RotateCcw, ShieldCheck, Star, Minus, Plus, Heart } from 'lucide-react';
+import { ChevronRight, Truck, RotateCcw, ShieldCheck, Star, Minus, Plus, Heart, Share2, Check, Copy } from 'lucide-react';
 
 const TABS = ['Specifications', 'Details', 'Reviews'];
 
@@ -19,6 +19,8 @@ export default function ProductDetailPage() {
   const [related, setRelated]       = useState([]);
   const [activeTab, setActiveTab]   = useState(0);
   const [activeImg, setActiveImg]   = useState(0);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { addToCart, updateQty, removeFromCart, cartItems } = useCart();
 
   useEffect(() => {
@@ -259,17 +261,27 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Buy Now */}
-              {product.stock > 0 && (
+              {/* Buy Now & Share buttons */}
+              <div className="flex gap-3 mb-6">
+                {product.stock > 0 && (
+                  <button
+                    onClick={() => {
+                      sessionStorage.setItem('buyNowItem', JSON.stringify({ ...product, qty: 1 }));
+                      router.push('/checkout?buyNow=true');
+                    }}
+                    className="flex-1 h-12 border border-[#0a0a0a] flex items-center justify-center text-xs font-bold tracking-widest uppercase text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white transition-colors">
+                    Buy Now
+                  </button>
+                )}
                 <button
                   onClick={() => {
-                    sessionStorage.setItem('buyNowItem', JSON.stringify({ ...product, qty: 1 }));
-                    router.push('/checkout?buyNow=true');
+                    setShowShareModal(true);
+                    setCopied(false);
                   }}
-                  className="h-12 border border-[#0a0a0a] flex items-center justify-center text-xs font-bold tracking-widest uppercase text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white transition-colors mb-6 w-full">
-                  Buy Now
+                  className="h-12 w-12 border border-gray-200 flex items-center justify-center text-gray-600 hover:border-[#0a0a0a] hover:text-[#0a0a0a] transition-colors shrink-0">
+                  <Share2 size={16} />
                 </button>
-              )}
+              </div>
 
               {(() => {
                 const perks = [
@@ -398,6 +410,73 @@ export default function ProductDetailPage() {
         </div>
       </main>
       <Footer />
+
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareModal && (
+          <>
+            <motion.div
+              key="share-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowShareModal(false)}
+              className="fixed inset-0 bg-black/40 z-50 backdrop-blur-sm"
+            />
+            <motion.div
+              key="share-modal"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+              <div className="bg-white border border-gray-200 p-6 w-full max-w-md pointer-events-auto shadow-2xl">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Share2 size={20} className="text-green-600" />
+                </div>
+                <h3 className="font-black text-lg text-center mb-1 text-[#0a0a0a]">Share Product</h3>
+                <p className="text-sm text-gray-500 text-center mb-6">Copy the link below to share this product</p>
+                
+                <div className="flex gap-2 mb-6">
+                  <input
+                    type="text"
+                    readOnly
+                    value={typeof window !== 'undefined' ? window.location.href : ''}
+                    className="flex-1 border border-gray-200 px-3 py-2 text-sm text-gray-600 outline-none bg-gray-50"
+                  />
+                  <button
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        navigator.clipboard.writeText(window.location.href);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#0a0a0a] text-white text-xs font-bold hover:bg-[#dc2626] transition-colors whitespace-nowrap">
+                    {copied ? (
+                      <>
+                        <Check size={14} />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="w-full py-2.5 border border-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-600 hover:bg-gray-50 transition-colors">
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

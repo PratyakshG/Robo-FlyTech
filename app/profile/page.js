@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/Toast';
 import { getProfile, updateProfile, changePassword, getMyOrders, getAddresses, addAddress, deleteAddress, getOrderById } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MapPin, Lock, ShoppingBag, Save, Eye, EyeOff, Package, LogOut, Settings, Heart, X, ChevronRight, Truck, CreditCard, Tag, PartyPopper, Smartphone } from 'lucide-react';
+import { User, MapPin, Lock, ShoppingBag, Save, Eye, EyeOff, Package, LogOut, Settings, Heart, X, ChevronRight, Truck, CreditCard, Tag, PartyPopper, Smartphone, AlertCircle } from 'lucide-react';
 import OrderStatusBar from '@/components/OrderStatusBar';
 import { INDIAN_STATES, fetchPincodeDetails } from '@/utils/indianStates';
 
@@ -508,11 +508,19 @@ export default function ProfilePage() {
                     </p>
                     <div className="divide-y divide-gray-100 border border-gray-100">
                       {selectedOrder.items?.map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 p-3">
+                        <div key={i} 
+                          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors group"
+                          onClick={() => {
+                            if (item.product?._id) {
+                              window.open(`/products/${item.product._id}`, '_blank');
+                            } else if (typeof item.product === 'string') {
+                              window.open(`/products/${item.product}`, '_blank');
+                            }
+                          }}>
                           <img src={item.image || 'https://placehold.co/48x48?text=...'}
-                            alt={item.name} className="w-12 h-12 object-cover border border-gray-100 shrink-0" />
+                            alt={item.name} className="w-12 h-12 object-cover border border-gray-100 shrink-0 group-hover:border-[#0a0a0a] transition-colors" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-[#0a0a0a] leading-tight">{item.name}</p>
+                            <p className="text-sm font-semibold text-[#0a0a0a] leading-tight group-hover:text-[#dc2626] transition-colors">{item.name}</p>
                             <p className="text-xs text-gray-400 mt-0.5">Qty: {item.quantity} × ₹{item.price?.toLocaleString()}</p>
                           </div>
                           <p className="text-sm font-black text-[#0a0a0a] shrink-0">
@@ -568,6 +576,17 @@ export default function ProfilePage() {
                       <div className="flex justify-between text-sm text-green-600 font-semibold">
                         <span>Coupon {selectedOrder.couponCode ? `(${selectedOrder.couponCode})` : ''}</span>
                         <span>- ₹{selectedOrder.discount?.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {selectedOrder.shippingChargesPending && (
+                      <div className="bg-amber-50 border border-amber-200 p-3 -mx-4 -mb-2">
+                        <div className="flex items-center gap-2 text-xs font-bold text-amber-800 mb-1">
+                          <AlertCircle size={12} className="text-amber-600" />
+                          <span>Delivery Charges Pending</span>
+                        </div>
+                        <p className="text-[10px] text-amber-700 leading-relaxed">
+                          Delivery charges will be calculated and updated within 1-2 hours. The final total will be updated accordingly.
+                        </p>
                       </div>
                     )}
                     <div className="flex justify-between font-black text-[#0a0a0a] border-t border-gray-200 pt-2">

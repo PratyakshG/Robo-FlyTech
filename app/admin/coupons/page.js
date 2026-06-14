@@ -1,11 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { getCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/lib/api';
-import { Tag, Plus, Edit2, Trash2, X, Check, Calendar, TrendingUp, Users } from 'lucide-react';
+import { Tag, Plus, Edit2, Trash2, X, Check, Calendar, TrendingUp, Users, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState([]);
+  const [filteredCoupons, setFilteredCoupons] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -26,11 +28,25 @@ export default function AdminCoupons() {
     try {
       const res = await getCoupons();
       setCoupons(res.data || []);
+      setFilteredCoupons(res.data || []);
     } catch (err) {
       console.error(err);
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredCoupons(coupons);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    const filtered = coupons.filter(c => 
+      c.code.toLowerCase().includes(query) ||
+      (c.description && c.description.toLowerCase().includes(query))
+    );
+    setFilteredCoupons(filtered);
+  }, [searchQuery, coupons]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -103,15 +119,32 @@ export default function AdminCoupons() {
           <h1 className="text-2xl font-black text-[#0a0a0a]">Coupon Codes</h1>
           <p className="text-sm text-gray-500 mt-1">Manage discount coupons for customers</p>
         </div>
-        <button onClick={() => { setForm(emptyForm); setEditingId(null); setShowModal(true); setError(''); }}
-          className="flex items-center gap-2 bg-[#0a0a0a] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#dc2626]">
-          <Plus size={16} /> New Coupon
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search coupons..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="border border-gray-200 pl-10 pr-4 py-2 text-sm outline-none focus:border-[#0a0a0a] transition-colors w-64"
+            />
+          </div>
+          <button onClick={() => { setForm(emptyForm); setEditingId(null); setShowModal(true); setError(''); }}
+            className="flex items-center gap-2 bg-[#0a0a0a] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#dc2626] whitespace-nowrap">
+            <Plus size={16} /> New Coupon
+          </button>
+        </div>
       </div>
 
       {loading ? (
         <div className="space-y-3">
           {[1,2,3].map(i => <div key={i} className="skeleton h-24 w-full" />)}
+        </div>
+      ) : filteredCoupons.length === 0 && coupons.length > 0 ? (
+        <div className="text-center py-16 border border-dashed border-gray-300">
+          <Tag size={40} className="mx-auto text-gray-300 mb-3" />
+          <p className="text-gray-400 text-sm">No coupons found matching "{searchQuery}"</p>
         </div>
       ) : coupons.length === 0 ? (
         <div className="text-center py-16 border border-dashed border-gray-300">
@@ -120,7 +153,7 @@ export default function AdminCoupons() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {coupons.map((coupon) => {
+          {filteredCoupons.map((coupon) => {
             const status = getCouponStatus(coupon);
             return (
               <motion.div key={coupon._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}

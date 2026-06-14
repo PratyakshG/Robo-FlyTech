@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/store/Navbar';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { createOrder, getAddresses, addAddress, deleteAddress, updateAddress, getProfile, validateCoupon } from '@/lib/api';
+import { createOrder, getAddresses, addAddress, deleteAddress, updateAddress, getProfile, validateCoupon, getProduct } from '@/lib/api';
 import Link from 'next/link';
 import { ChevronRight, Lock, Plus, Trash2, ShieldCheck, Truck, Tag, Edit2, Check, Banknote, Smartphone, Gift, PartyPopper } from 'lucide-react';
 import Footer from '@/components/store/Footer';
@@ -70,10 +70,14 @@ function CheckoutContent() {
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
+  const [productsFreeShipping, setProductsFreeShipping] = useState(null);
 
-  const shippingCost = checkoutTotalPrice > 999 ? 0 : 99;
+  // Calculate shipping: if ALL products have freeShipping=true, then ₹0. Otherwise show pending.
+  const allFreeShipping = productsFreeShipping && checkoutItems.length > 0 && checkoutItems.every(item => productsFreeShipping[item._id] === true);
+  const shippingCost = allFreeShipping ? 0 : 99;
+
   const couponDiscount = appliedCoupon?.discount || 0;
-  const total = checkoutTotalPrice + shippingCost - couponDiscount;
+  const total = checkoutTotalPrice + (allFreeShipping ? 0 : 0) - couponDiscount; // Don't add shipping to total in UI when pending
   const totalSaved = (checkoutMrpTotal - checkoutTotalPrice) + (shippingCost === 0 ? 99 : 0) + couponDiscount;
 
   useEffect(() => {
@@ -87,6 +91,23 @@ function CheckoutContent() {
       setAddrLoading(false);
     }).catch(() => { setShowNewForm(true); setAddrLoading(false); });
   }, [user]);
+
+  useEffect(() => {
+    const fetchProductShipping = async () => {
+      if (checkoutItems.length === 0) return;
+      const shippingMap = {};
+      for (const item of checkoutItems) {
+        try {
+          const response = await getProduct(item._id);
+          shippingMap[item._id] = response.data.freeShipping === true;
+        } catch (err) {
+          shippingMap[item._id] = false;
+        }
+      }
+      setProductsFreeShipping(shippingMap);
+    };
+    fetchProductShipping();
+  }, [JSON.stringify(checkoutItems.map(i => i._id))]);
 
   const activeShipping = () => {
     if (showNewForm || !selectedAddressId) return shipping;
@@ -160,7 +181,7 @@ function CheckoutContent() {
   const handlePlaceOrder = async () => {
     setLoading(true); setError('');
     try {
-      await createOrder({
+      const response = await createOrder({
         items: checkoutItems.map(i => ({ product: i._id, name: i.name, image: i.image, price: i.offerPrice || i.price, originalPrice: i.price, quantity: i.qty })),
         shippingAddress: activeShipping(),
         paymentMethod,
@@ -171,6 +192,12 @@ function CheckoutContent() {
         couponCode: appliedCoupon?.code || '',
         discount: couponDiscount,
       });
+      
+      // Store shipping pending status
+      if (response.data.shippingChargesPending) {
+        sessionStorage.setItem('shippingChargesPending', 'true');
+      }
+      
       if (!buyNowData) clearCart();
       if (buyNowData) sessionStorage.removeItem('buyNowItem');
       if (typeof window !== 'undefined') sessionStorage.setItem('lastOrderPaymentMethod', paymentMethod);
@@ -521,9 +548,13 @@ function CheckoutContent() {
                     </div>
                     <div className="flex justify-between px-4 py-3 text-sm">
                       <span className="text-gray-500">Delivery</span>
-                      <span className={shippingCost === 0 ? 'text-green-600 font-semibold' : 'font-semibold'}>
-                        {shippingCost === 0 ? 'FREE' : `₹${shippingCost}`}
-                      </span>
+                      {!productsFreeShipping ? (
+                        <span className="text-gray-400 text-xs">Loading...</span>
+                      ) : allFreeShipping ? (
+                        <span className="text-green-600 font-semibold">FREE</span>
+                      ) : (
+                        <span className="text-amber-600 text-xs font-semibold">Will be updated in 1-2 hours</span>
+                      )}
                     </div>
                     {couponDiscount > 0 && (
                       <div className="flex justify-between px-4 py-3 text-sm">
@@ -574,9 +605,13 @@ function CheckoutContent() {
                   )}
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Delivery</span>
-                    <span className={shippingCost === 0 ? 'text-green-600 font-semibold' : ''}>
-                      {shippingCost === 0 ? 'FREE' : `₹${shippingCost}`}
-                    </span>
+                    {!productsFreeShipping ? (
+                      <span className="text-gray-400 text-xs">Loading...</span>
+                    ) : allFreeShipping ? (
+                      <span className="text-green-600 font-semibold">FREE</span>
+                    ) : (
+                      <span className="text-amber-600 text-xs">Will be updated in 1-2 hours</span>
+                    )}
                   </div>
                   {couponDiscount > 0 && (
                     <div className="flex justify-between text-sm text-green-600 font-semibold">

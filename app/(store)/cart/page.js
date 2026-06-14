@@ -5,9 +5,31 @@ import { useCart } from '@/context/CartContext';
 import { PageTransition } from '@/components/Motion';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Trash2, ArrowRight, ShoppingBag, Truck } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getProduct } from '@/lib/api';
 
 export default function CartPage() {
   const { cartItems, removeFromCart, updateQty, totalPrice, mrpTotal, clearCart } = useCart();
+  const [productsFreeShipping, setProductsFreeShipping] = useState(null);
+
+  useEffect(() => {
+    const fetchProductShipping = async () => {
+      if (cartItems.length === 0) return;
+      const shippingMap = {};
+      for (const item of cartItems) {
+        try {
+          const response = await getProduct(item._id);
+          shippingMap[item._id] = response.data.freeShipping === true;
+        } catch {
+          shippingMap[item._id] = false;
+        }
+      }
+      setProductsFreeShipping(shippingMap);
+    };
+    fetchProductShipping();
+  }, [JSON.stringify(cartItems.map(i => i._id))]);
+
+  const allFreeShipping = productsFreeShipping && cartItems.length > 0 && cartItems.every(item => productsFreeShipping[item._id] === true);
 
   if (cartItems.length === 0) return (
     <>
@@ -26,7 +48,7 @@ export default function CartPage() {
     </>
   );
 
-  const shipping = totalPrice > 999 ? 0 : 99;
+
 
   return (
     <>
@@ -117,22 +139,31 @@ export default function CartPage() {
                   )}
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Shipping</span>
-                    <span>
-                      {shipping === 0
-                        ? <span className="text-[#0a0a0a] font-semibold flex items-center gap-1"><Truck size={12} /> FREE</span>
-                        : `₹${shipping}`}
-                    </span>
+                    {!productsFreeShipping ? (
+                      <span className="text-gray-400 text-xs">Loading...</span>
+                    ) : allFreeShipping ? (
+                      <span className="text-[#0a0a0a] font-semibold flex items-center gap-1"><Truck size={12} /> FREE</span>
+                    ) : (
+                      <span className="text-amber-600 text-xs">Will be updated in 1-2 hours</span>
+                    )}
                   </div>
-                  {shipping > 0 && (
-                    <p className="text-xs text-gray-400 flex items-center gap-1">
-                      <Truck size={11} /> Fast shipping · Free above ₹999
+                  {!allFreeShipping && productsFreeShipping && (
+                    <p className="text-xs text-amber-600">
+                      Charges will be calculated based on your location
                     </p>
                   )}
+
                   <hr className="classic-divider" />
                   <div className="flex justify-between font-black text-[#0a0a0a]">
                     <span>Total</span>
-                    <span className="text-lg">₹{(totalPrice + shipping).toLocaleString()}</span>
+                    <span className="text-lg">₹{totalPrice.toLocaleString()}</span>
                   </div>
+                  {!allFreeShipping && productsFreeShipping && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      * Final amount will be updated after shipping calculation
+                    </p>
+                  )}
+
                 </div>
                 <Link href="/checkout"
                   className="btn-primary w-full py-3 mt-5 flex items-center justify-center gap-2">

@@ -1,18 +1,26 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingBag, Package, CheckCheck, Smartphone } from 'lucide-react';
+import { ShoppingBag, Package, CheckCheck, Smartphone, AlertCircle } from 'lucide-react';
 import Navbar from '@/components/store/Navbar';
 import Footer from '@/components/store/Footer';
 
 export default function OrderSuccessPage() {
   const router = useRouter();
-  const paymentMethod = typeof window !== 'undefined' ? sessionStorage.getItem('lastOrderPaymentMethod') : null;
+  const [paymentMethod, setPaymentMethod] = useState(null);
+  const [shippingPending, setShippingPending] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setPaymentMethod(sessionStorage.getItem('lastOrderPaymentMethod'));
+      setShippingPending(sessionStorage.getItem('shippingChargesPending') === 'true');
+    }
     return () => {
-      if (typeof window !== 'undefined') sessionStorage.removeItem('lastOrderPaymentMethod');
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('lastOrderPaymentMethod');
+        sessionStorage.removeItem('shippingChargesPending');
+      }
     };
   }, []);
 
@@ -30,6 +38,19 @@ export default function OrderSuccessPage() {
           <h1 className="font-black text-[2.5rem] tracking-[-0.04em] leading-none text-[#0a0a0a] mb-4">
             Order placed<br />successfully!
           </h1>
+          
+          {shippingPending && (
+            <div className="text-sm text-amber-700 leading-relaxed mb-4 bg-amber-50 border border-amber-200 p-4 rounded">
+              <div className="flex items-center gap-2 font-bold text-[#0a0a0a] mb-2">
+                <AlertCircle size={16} className="text-amber-600" />
+                <span>Delivery Charges Pending</span>
+              </div>
+              <p className="text-sm">
+                Your delivery charges will be calculated and updated within 1-2 hours based on your location. The final order total will be updated accordingly. You can track this in your order details.
+              </p>
+            </div>
+          )}
+          
           {paymentMethod === 'UPI' ? (
             <div className="text-sm text-gray-600 leading-relaxed mb-8 bg-blue-50 border border-blue-200 p-4 rounded">
               <div className="flex items-center gap-2 font-bold text-[#0a0a0a] mb-2">

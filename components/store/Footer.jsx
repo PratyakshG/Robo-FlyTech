@@ -122,10 +122,15 @@ export default function Footer() {
 
       {/* Bottom bar */}
       <div className="border-t border-gray-800">
-        <div className="max-w-[1400px] mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-2">
-          <p className="text-[11px] text-gray-600 tracking-widest uppercase">
-            © 2026 ROBO FLYTECH / ALL RIGHTS RESERVED.
-          </p>
+        <div className="max-w-[1400px] mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="text-center md:text-left">
+            <p className="text-[11px] text-gray-600 tracking-widest uppercase">
+              © 2026 ROBO FLYTECH / ALL RIGHTS RESERVED.
+            </p>
+            <p className="text-[10px] text-gray-700 mt-1">
+              Developed by <span className="text-[#dc2626] font-semibold">Aditya Singh</span>
+            </p>
+          </div>
           <div className="flex items-center gap-6">
             {['PRIVACY', 'TERMS', 'COOKIES'].map(l => (
               <Link key={l} href="#"
