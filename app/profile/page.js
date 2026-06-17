@@ -568,8 +568,8 @@ export default function ProfilePage() {
                     })()}
                     <div className="flex justify-between text-sm text-gray-500">
                       <span>Delivery</span>
-                      <span className={selectedOrder.shippingPrice === 0 ? 'text-green-600 font-semibold' : ''}>
-                        {selectedOrder.shippingPrice === 0 ? 'FREE' : `₹${selectedOrder.shippingPrice}`}
+                      <span className={selectedOrder.shippingPrice === 0 && !selectedOrder.shippingChargesPending ? 'text-green-600 font-semibold' : ''}>
+                        {selectedOrder.shippingChargesPending ? 'Pending' : (selectedOrder.shippingPrice === 0 ? 'FREE' : `₹${selectedOrder.shippingPrice}`)}
                       </span>
                     </div>
                     {selectedOrder.discount > 0 && (
@@ -601,7 +601,7 @@ export default function ProfilePage() {
                       const offerSave = selectedOrder.originalItemsPrice > selectedOrder.itemsPrice
                         ? selectedOrder.originalItemsPrice - selectedOrder.itemsPrice
                         : itemsOffer;
-                      const deliverySave = selectedOrder.shippingPrice === 0 ? 99 : 0;
+                      const deliverySave = (selectedOrder.shippingPrice === 0 && !selectedOrder.shippingChargesPending) ? 99 : 0;
                       const couponSave = selectedOrder.discount || 0;
                       const totalSave = offerSave + deliverySave + couponSave;
                       return totalSave > 0 ? (

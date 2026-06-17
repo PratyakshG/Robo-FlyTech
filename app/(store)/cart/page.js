@@ -74,7 +74,7 @@ export default function CartPage() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="bg-white border border-gray-200 p-3 sm:p-4 flex flex-col xs:flex-row gap-3 sm:gap-4 hover:border-[#0a0a0a] transition-colors w-full min-w-0 overflow-hidden">
+                      className="relative bg-white border border-gray-200 p-3 sm:p-4 flex flex-col xs:flex-row gap-3 sm:gap-4 hover:border-[#0a0a0a] transition-colors w-full min-w-0 overflow-hidden">
                       <div className="flex gap-3 sm:gap-4 min-w-0 flex-1">
                         <img src={item.image || 'https://placehold.co/80x80?text=No+Img'} alt={item.name}
                           className="w-16 h-16 sm:w-20 sm:h-20 object-cover shrink-0" />
@@ -89,12 +89,12 @@ export default function CartPage() {
                           </div>
                         </div>
                       </div>
+                      <button onClick={() => removeFromCart(item._id)}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-[#dc2626] transition-colors p-1 bg-white rounded-full z-10">
+                        <Trash2 size={15} />
+                      </button>
+
                       <div className="flex items-center justify-between sm:flex-col sm:items-end sm:justify-between shrink pl-0 sm:pl-[4.25rem]">
-                        <motion.button whileTap={{ scale: 0.9 }}
-                          onClick={() => removeFromCart(item._id)}
-                          className="text-gray-300 hover:text-[#dc2626] transition-colors sm:order-first">
-                          <Trash2 size={15} />
-                        </motion.button>
                         <div className="flex items-center border border-[#0a0a0a]">
                           <motion.button whileTap={{ scale: 0.9 }}
                             onClick={() => item.qty > 1 ? updateQty(item._id, item.qty - 1) : removeFromCart(item._id)}
@@ -113,7 +113,7 @@ export default function CartPage() {
                   ))}
                 </AnimatePresence>
                 <button onClick={clearCart}
-                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#dc2626] transition-colors mt-2">
+                  className="btn-primary px-3 py-2 text-xs mt-2 flex items-center gap-1.5">
                   <Trash2 size={13} /> Clear all items
                 </button>
               </div>

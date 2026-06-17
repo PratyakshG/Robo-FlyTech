@@ -172,12 +172,12 @@ export default function LoginPage() {
             <div className="flex-1 h-px bg-gray-100" />
           </div>
 
-          <p className="text-center text-sm text-gray-400">
-            No account?{' '}
-            <Link href="/register" className="text-[#0a0a0a] font-bold hover:text-[#dc2626] transition-colors">
-              Create one →
+          <div className="text-center">
+            <p className="text-sm text-gray-400 mb-3">No account?</p>
+            <Link href="/register" className="btn-primary inline-flex items-center justify-center px-4 py-2">
+              Create an account →
             </Link>
-          </p>
+          </div>
         </motion.div>
       </div>
     </div>

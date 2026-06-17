@@ -72,13 +72,15 @@ function CheckoutContent() {
   const [couponError, setCouponError] = useState('');
   const [productsFreeShipping, setProductsFreeShipping] = useState(null);
 
-  // Calculate shipping: if ALL products have freeShipping=true, then ₹0. Otherwise show pending.
+  // Calculate shipping: if ALL products have freeShipping=true then 0. Otherwise shipping is pending
   const allFreeShipping = productsFreeShipping && checkoutItems.length > 0 && checkoutItems.every(item => productsFreeShipping[item._id] === true);
-  const shippingCost = allFreeShipping ? 0 : 99;
+  // Do not assume a default numeric shipping cost — leave `null`/unknown until calculated
+  const shippingCost = allFreeShipping ? 0 : null;
 
   const couponDiscount = appliedCoupon?.discount || 0;
-  const total = checkoutTotalPrice + (allFreeShipping ? 0 : 0) - couponDiscount; // Don't add shipping to total in UI when pending
-  const totalSaved = (checkoutMrpTotal - checkoutTotalPrice) + (shippingCost === 0 ? 99 : 0) + couponDiscount;
+  const total = checkoutTotalPrice - couponDiscount; // Don't add shipping to total in UI when pending
+  // Omit shipping contribution to savings until a concrete shipping value is known
+  const totalSaved = (checkoutMrpTotal - checkoutTotalPrice) + couponDiscount;
 
   useEffect(() => {
     if (!user) return;
@@ -186,7 +188,8 @@ function CheckoutContent() {
         shippingAddress: activeShipping(),
         paymentMethod,
         itemsPrice: checkoutTotalPrice,
-        shippingPrice: shippingCost,
+        // If shipping is not yet known, send 0; backend will mark shippingChargesPending
+        shippingPrice: shippingCost ?? 0,
         totalPrice: total,
         originalItemsPrice: checkoutMrpTotal,
         couponCode: appliedCoupon?.code || '',
