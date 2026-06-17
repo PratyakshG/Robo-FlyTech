@@ -35,7 +35,7 @@ export default function CartPage() {
     <>
       <Navbar />
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="min-h-[60vh] flex flex-col items-center justify-center text-center gap-5">
+        className="min-h-[60vh] flex flex-col items-center justify-center text-center gap-5 px-4 sm:px-6">
         <div className="w-20 h-20 bg-gray-100 flex items-center justify-center">
           <ShoppingCart size={32} className="text-gray-300" />
         </div>
@@ -54,19 +54,19 @@ export default function CartPage() {
     <>
       <Navbar />
       <PageTransition>
-        <main className="bg-white min-h-screen">
-          <div className="max-w-[1400px] mx-auto px-6 py-10">
-            <div className="flex items-center justify-between mb-8">
-              <div>
+        <main className="bg-white min-h-screen overflow-x-hidden">
+          <div className="max-w-[1400px] mx-auto w-full min-w-0 px-4 sm:px-6 py-6 sm:py-10">
+            <div className="flex flex-wrap items-end justify-between gap-3 mb-6 sm:mb-8">
+              <div className="min-w-0">
                 <p className="section-label mb-1">[ CART ]</p>
-                <h1 className="font-black text-[2rem] tracking-[-0.03em] text-[#0a0a0a]">Shopping Cart</h1>
+                <h1 className="font-black text-xl sm:text-[2rem] tracking-[-0.03em] text-[#0a0a0a]">Shopping Cart</h1>
               </div>
-              <span className="text-xs text-gray-400 tracking-widest uppercase">{cartItems.length} item{cartItems.length > 1 ? 's' : ''}</span>
+              <span className="text-xs text-gray-400 tracking-widest uppercase shrink-0">{cartItems.length} item{cartItems.length > 1 ? 's' : ''}</span>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6">
               {/* Items */}
-              <div className="md:col-span-2 space-y-3">
+              <div className="lg:col-span-2 space-y-3 min-w-0 w-full">
                 <AnimatePresence>
                   {cartItems.map(item => (
                     <motion.div key={item._id}
@@ -74,23 +74,25 @@ export default function CartPage() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="bg-white border border-gray-200 p-4 flex gap-4 hover:border-[#0a0a0a] transition-colors">
-                      <img src={item.image || 'https://placehold.co/80x80?text=No+Img'} alt={item.name}
-                        className="w-20 h-20 object-cover shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-semibold tracking-widest uppercase text-gray-400 mb-0.5">{item.brand}</p>
-                        <h3 className="font-bold text-sm text-[#0a0a0a] truncate">{item.name}</h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-[#0a0a0a] font-black">₹{(item.offerPrice || item.price).toLocaleString()}</p>
-                          {item.offerPrice && (
-                            <p className="text-xs text-gray-400 line-through">₹{item.price.toLocaleString()}</p>
-                          )}
+                      className="bg-white border border-gray-200 p-3 sm:p-4 flex flex-col xs:flex-row gap-3 sm:gap-4 hover:border-[#0a0a0a] transition-colors w-full min-w-0 overflow-hidden">
+                      <div className="flex gap-3 sm:gap-4 min-w-0 flex-1">
+                        <img src={item.image || 'https://placehold.co/80x80?text=No+Img'} alt={item.name}
+                          className="w-16 h-16 sm:w-20 sm:h-20 object-cover shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-semibold tracking-widest uppercase text-gray-400 mb-0.5 truncate">{item.brand}</p>
+                          <h3 className="font-bold text-sm text-[#0a0a0a] line-clamp-2 sm:truncate">{item.name}</h3>
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <p className="text-[#0a0a0a] font-black">₹{(item.offerPrice || item.price).toLocaleString()}</p>
+                            {item.offerPrice && (
+                              <p className="text-xs text-gray-400 line-through">₹{item.price.toLocaleString()}</p>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end justify-between shrink-0">
+                      <div className="flex items-center justify-between sm:flex-col sm:items-end sm:justify-between shrink pl-0 sm:pl-[4.25rem]">
                         <motion.button whileTap={{ scale: 0.9 }}
                           onClick={() => removeFromCart(item._id)}
-                          className="text-gray-300 hover:text-[#dc2626] transition-colors">
+                          className="text-gray-300 hover:text-[#dc2626] transition-colors sm:order-first">
                           <Trash2 size={15} />
                         </motion.button>
                         <div className="flex items-center border border-[#0a0a0a]">
@@ -119,7 +121,7 @@ export default function CartPage() {
               {/* Summary */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white border border-gray-200 p-5 h-fit">
+                className="bg-white border border-gray-200 p-4 sm:p-5 h-fit w-full min-w-0 lg:sticky lg:top-24">
                 <h2 className="font-black text-base tracking-tight text-[#0a0a0a] mb-4">Order Summary</h2>
                 <div className="space-y-3">
                   {mrpTotal > totalPrice && (
