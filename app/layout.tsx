@@ -1,15 +1,20 @@
-import { AuthProvider } from '@/context/AuthContext';
-import { CartProvider } from '@/context/CartContext';
-import { ToastProvider } from '@/components/Toast';
-import FloatButtons from '@/components/WhatsAppFloat';
-import './globals.css';
+import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
+import { ToastProvider } from "@/components/Toast";
+import FloatButtons from "@/components/WhatsAppFloat";
+import "./globals.css";
 
 export const metadata = {
-  title: 'Robo Flytech',
-  description: 'Robo Flytech sells drones, drone parts, Voci Toci gadgets, and advanced drone accessories.',
+  title: "Robo Flytech",
+  description:
+    "Robo Flytech sells Drones, Drone Parts, Walkie Talkies, and advanced diy accessories.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body>

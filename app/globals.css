@@ -9,9 +9,9 @@
 
   img { max-width: 100%; height: auto; }
 
-  html {
+  /* html {
     overflow-x: hidden;
-  }
+  } */
 
   body {
     min-height: 100vh;

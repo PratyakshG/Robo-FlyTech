@@ -342,7 +342,7 @@ function ProductsContent() {
             {/* ── PRODUCT GRID ── */}
             <div className="flex-1 min-w-0">
               {loading ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 border-l border-t border-gray-200">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-5 *:border *:border-gray-200 *:rounded-xl *:overflow-clip">
                   {Array(9).fill(0).map((_, i) => (
                     <div key={i} className="border-r border-b border-gray-200">
                       <div className="skeleton h-64 w-full" />
@@ -363,7 +363,7 @@ function ProductsContent() {
                 </motion.div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 md:grid-cols-3 border-l border-t border-gray-200">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-5 *:border *:border-gray-200 *:rounded-xl *:overflow-clip">
                     {products.map((p, i) => (
                       <motion.div key={p._id}
                         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
